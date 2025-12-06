@@ -1,4 +1,4 @@
-# Gemini CLI Rules
+﻿# Gemini CLI Rules
 
 This file is generated during init for the selected agent.
 
@@ -208,3 +208,15 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Project Technical Context
+-   **Language/Version**: Python 3.10+ (for ROS 2 and simulation scripts), PowerShell (for automation scripts), Markdown/MDX (for book content)
+-   **Primary Dependencies**: ROS 2 Humble (LTS), NVIDIA Isaac Sim 2023.1.1+, Docusaurus 3.x, Git, `gemini` CLI
+-   **Storage**: Git repository for all content, prompts, and code; GitHub Pages for deployed website.
+-   **Testing**: `pytest` for Python code, `npm run check-links` for Docusaurus links, GitHub Actions for CI/CD, manual verification for content quality (human review).
+-   **Target Platform**: Ubuntu 22.04 LTS (for development, testing, and simulation environment), Web browser (for Docusaurus site).
+-   **Project Type**: Book (static website)
+-   **Performance Goals**: Docusaurus site Lighthouse score ≥ 97 across all categories. Content generation performance is secondary to quality and reproducibility.
+-   **Constraints**: 100% Gemini 2.5 Flash authorship, strict Spec-Kit Plus compliance, APA 7th edition citations, Mermaid/Gemini-generated SVG diagrams, 45,000–60,000 word count. Simulation-first approach for core content (real hardware optional).
+-   **Scale/Scope**: 14 chapters, 4 appendices, 80+ citations. Single book project.
+-   **Key Decisions Already Locked**: Simulation-first capstone (real hardware = optional bonus), Gemini 2.5 Flash = sole author, APA 7th edition citations, Diagrams = Mermaid only (theme #00ff9d), All code tested on ROS 2 Humble + Isaac Sim 2023.1.1+.
