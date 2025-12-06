@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Gemini-Only Authorship**: Does the proposed plan rely exclusively on Gemini 2.5 Flash for all content and code generation?
+- [ ] **Spec-Driven Development**: Does every proposed task trace back to a requirement in the `spec.md` file?
+- [ ] **Full Prompt Transparency**: Does the plan account for saving all prompts to `history/prompts/`?
+- [ ] **Embodiment First**: Does the plan reinforce the goal of demonstrating the CLI-driven process, rather than taking shortcuts?
+- [ ] **Standards Adherence**: Does the plan respect the key standards (Docusaurus, MDX, APA 7th, etc.)?
 
 ## Project Structure
 
