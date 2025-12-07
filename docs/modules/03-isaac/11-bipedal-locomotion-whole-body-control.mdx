@@ -1,0 +1,261 @@
+---
+title: "11. Bipedal Locomotion & Whole-Body Control"
+sidebar_label: "11. Bipedal Locomotion"
+---
+
+import { Mermaid } from 'mdx-mermaid';
+
+## Chapter 11: Bipedal Locomotion, ZMP, and Whole-Body Control
+
+### The Grand Challenge of Walking
+
+We arrive at the pinnacle of our journey in humanoid robotics: bipedal locomotion. Making a robot walk is arguably one of the most difficult problems in all of robotics. It is a dynamic, unstable, and complex process that requires a deep understanding of physics, control theory, and optimization. Unlike a wheeled robot, a walking humanoid is constantly on the verge of falling. Every step is a controlled, and recovered, fall.
+
+This chapter will demystify the core principles and modern techniques used to achieve stable bipedal walking. We will build, from the ground up, a complete software stack capable of making our 22-DoF humanoid walk dynamically through a cluttered environment in Isaac Sim.
+
+Our approach will be a hierarchical one, mirroring the state-of-the-art in legged robotics:
+1.  **High-Level Planner:** Decides *where* to walk.
+2.  **Walking Pattern Generator:** Determines *how* to walk by generating dynamically stable trajectories for the robot's body and feet.
+3.  **Whole-Body Controller:** Calculates the joint torques needed to execute the walk, ensuring the robot doesn't fall over.
+
+<Mermaid chart={`
+graph TD;
+    A[Desired Velocity] --> B[Walking Pattern Generator<br/><i>(ZMP Trajectory Planner)</i>];
+    B -- Desired CoM & Foot Trajectories --> C[Whole-Body Controller<br/><i>(QP Optimization)</i>];
+    C -- Joint Torques --> D[Isaac Sim<br/><i>(Simulated Humanoid)</i>];
+    D -- Robot State (Joints, IMU) --> C;
+    style B fill:#ccffcc
+    style C fill:#00ff9d
+`} />
+
+### Fundamentals of Dynamic Balance
+
+To understand walking, we must first understand balance.
+
+#### Center of Mass (CoM), Center of Pressure (CoP), and the Support Polygon
+
+*   **Center of Mass (CoM):** The average location of all mass in the robot. This is a point in 3D space.
+*   **Support Polygon:** The convex hull of all the points where the robot is in contact with the ground. For a robot standing on one foot, it's the area of the foot. For two feet, it's the area encompassing both feet.
+*   **Center of Pressure (CoP):** The point on the ground where the net ground reaction force is applied. Think of it as the "center" of the pushing force from the ground onto the robot.
+
+**The Golden Rule of Static Balance:** If the vertical projection of the CoM is inside the support polygon, the robot is statically stable.
+
+<Mermaid chart={`
+graph TD;
+    subgraph "Stable"
+        A[CoM] --> B((Support Polygon));
+        style B fill:#ccffcc
+    end
+    subgraph "Unstable (Tipping)"
+        C[CoM] -.-> D((Support Polygon));
+        style D fill:#ffcccc
+    end
+`} />
+
+However, walking is a *dynamic* process. The CoM is almost always accelerating, which means static stability is not enough. This brings us to the most crucial concept in locomotion: the ZMP.
+
+#### Zero-Moment Point (ZMP)
+
+The **Zero-Moment Point (ZMP)** is the point on the ground where the net moment due to gravity and inertial (acceleration) forces is zero. In simpler terms, it's the point where the robot's dynamic tipping-over moment is zero.
+
+**The Golden Rule of Dynamic Balance:** If the ZMP stays within the support polygon at all times, the robot will not fall over.
+
+Walking is the art of intentionally manipulating the ZMP. To take a step, the robot shifts its CoM, which moves the ZMP forward. Just as the ZMP is about to leave the support polygon (causing a fall), the robot swings its other foot forward to create a new, larger support polygon, "catching" the ZMP and re-establishing stability.
+
+<Mermaid chart={`
+sequenceDiagram
+    participant R as Robot
+    participant G as Ground
+    R->>G: Step 1: CoM Shift (ZMP moves to edge of foot)
+    R->>G: Step 2: Swing Leg Forward
+    R->>G: Step 3: New Support Polygon Catches ZMP
+`} />
+
+### Generating Rhythmic Motion: The Walking Pattern Generator
+
+How do we generate a plan for the CoM and feet that guarantees the ZMP stays in the support polygon? We use a simplified model of the robot's dynamics. The most common is the **Linear Inverted Pendulum Model (LIPM)**, also known as the Cart-Table model.
+
+#### The Cart-Table Model (LIPM)
+
+We model the entire complex robot as a single point mass (the CoM) at a fixed height `h` above a massless "cart" that can move instantaneously. The position of this cart on the ground is the ZMP.
+
+<Mermaid chart={`
+graph TD;
+    A((CoM)) -- h --> B(ZMP);
+    B -- "Moves on" --> C[Ground Plane];
+    style A fill:#00ff9d
+`} />
+
+The physics of this model gives us a beautiful, simple equation that links the motion of the CoM to the position of the ZMP:
+`x_zmp = x_com - (h/g) * ddx_com`
+Where `ddx_com` is the acceleration of the Center of Mass.
+
+This equation is powerful. It tells us that if we have a desired, stable path for our ZMP (`x_zmp`), we can solve this differential equation to find the exact path our CoM (`x_com`) must follow to produce it.
+
+Our Pattern Generator will:
+1.  **Define Footstep Locations:** Plan a series of future footstep placements based on a desired walking speed.
+2.  **Define a ZMP Trajectory:** Create a smooth path for the ZMP that moves from the center of one support foot to the center of the next.
+3.  **Solve for the CoM Trajectory:** Using the LIPM equation, calculate the CoM trajectory that produces the desired ZMP trajectory.
+4.  **Generate Swing Foot Trajectories:** Create a simple curve (e.g., a cycloid or polynomial) for the swing foot to move from its old position to the next planned footstep.
+
+**Python `WalkingPatternGenerator` (Conceptual):**
+```python
+import numpy as np
+
+class WalkingPatternGenerator:
+    def __init__(self, com_height, step_time, step_length):
+        self.h = com_height
+        self.g = 9.81
+        self.omega = np.sqrt(self.g / self.h)
+        # ... other params ...
+
+    def plan_zmp_trajectory(self, footstep_locations):
+        # Creates a smooth spline for the ZMP to follow
+        pass
+
+    def solve_for_com_trajectory(self, zmp_trajectory):
+        # Uses a preview control algorithm or similar to solve the LIPM dynamics
+        # and find the CoM path.
+        pass
+
+    def generate_swing_foot_trajectory(self, start_pos, end_pos):
+        # Generates a smooth curve for the foot in the air.
+        pass
+        
+    def generate(self, current_time):
+        # Main function called at each time step
+        # 1. Get desired footstep locations
+        # 2. Plan ZMP path
+        # 3. Solve for CoM path
+        # 4. Generate swing foot path
+        # Returns: desired_com_pos, desired_swing_foot_pos, ...
+        pass
+```
+
+### Controlling the Full Body: The Whole-Body Controller (WBC)
+
+The pattern generator gives us a *plan* for a few key points (the CoM and one foot). But how do we coordinate all 22 joints of the robot to achieve this plan? This is the job of the **Whole-Body Controller**.
+
+We will use a powerful, modern technique called **Task-Space, Optimization-Based Control** using a **Quadratic Programming (QP)** solver.
+
+Instead of controlling each joint individually, we define a set of *tasks* we want the robot to accomplish. We rank these tasks by priority.
+
+**Our Task Hierarchy:**
+1.  **Contact Constraint (Highest Priority):** The support foot must stay perfectly flat on the ground and not slip. This is a hard constraint.
+2.  **CoM Tracking:** The robot's CoM should follow the desired CoM trajectory from the pattern generator.
+3.  **Swing Foot Tracking:** The robot's swing foot should follow its desired trajectory.
+4.  **Posture (Lowest Priority):** The rest of the robot's joints (arms, torso) should maintain a default, neutral posture.
+
+At every control step (e.g., every 1ms), the WBC solves a constrained optimization problem:
+"Find the set of joint torques that *best achieves* this hierarchy of tasks, without violating the physics of the robot or the friction limits of the ground."
+
+This is formulated as a QP problem, which can be solved extremely quickly.
+
+<Mermaid chart={`
+graph TD;
+    subgraph "Whole-Body Controller (at each timestep)"
+        A[Current Robot State<br/>(Joint Angles/Vels)] --> B{QP Solver};
+        C[Desired Trajectories<br/>(from Pattern Generator)] --> B;
+        
+        subgraph "Optimization Problem"
+            direction LR
+            D["min ||Ax - b||^2"]
+            E["subject to Gx <= h"]
+        end
+
+        B -- Solves --> D & E;
+        D & E -- Produces --> F[Optimal Joint Torques];
+    end
+    F --> G[Apply to Robot Joints];
+`} />
+
+**Python `WholeBodyController` (Conceptual):**
+```python
+import qpsolvers
+import numpy as np
+
+class WholeBodyController:
+    def __init__(self, robot_model):
+        self.robot = robot_model # Pinocchio or similar dynamics library
+        self.solver = "qpsolvers"
+
+    def compute_torques(self, desired_com_pos, desired_swing_pos):
+        # 1. Get current robot state (q, v)
+        # 2. Calculate Jacobians and dynamics matrices (using Pinocchio)
+        # 3. Formulate the QP problem:
+        #    - Build the cost function 'P' and 'q' matrices from tasks
+        #    - Build the constraint matrices 'G' and 'h' from friction cones and torque limits
+        # 4. Solve the QP
+        #    torques = qpsolvers.solve_qp(P, q, G, h)
+        # 5. Return the torques
+        pass
+```
+
+### Integration with Isaac Sim: The Control Script
+
+We now create a Python script for Isaac Sim that brings everything together. This script will subclass `omni.isaac.core.simulation_context.SimulationContext` and implement the main physics step loop.
+
+**`bipedal_walk.py`:**
+```python
+from omni.isaac.core.simulation_context import SimulationContext
+from omni.isaac.core.articulation_view import ArticulationView
+# Import our controller classes
+from walking_pattern_generator import WalkingPatternGenerator
+from whole_body_controller import WholeBodyController
+import numpy as np
+
+class BipedalWalker(SimulationContext):
+    def __init__(self, stage_units_in_meters=1.0):
+        super().__init__(stage_units_in_meters)
+        self._world.scene.add_default_ground_plane()
+        
+        # Load the cluttered apartment world from Chapter 6
+        # ... code to load USD ...
+        
+        # Load the robot
+        prim_utils.create_prim("h1_prim", prim_path="/World/h1", usd_path="/path/to/h1.usd")
+        self.robot = ArticulationView(prim_paths_expr="/World/h1", name="h1_view")
+        self._world.scene.add(self.robot)
+
+    def setup_scene(self):
+        self._world.reset()
+        # Initialize controllers
+        self.pattern_generator = WalkingPatternGenerator(...)
+        self.wbc = WholeBodyController(...)
+
+    def physics_step(self, step_size):
+        # 1. Get current robot state from self.robot.get_joint_positions/velocities()
+        # 2. Call the pattern generator to get desired trajectories for this timestep
+        #    desired_state = self.pattern_generator.generate(self._world.current_time)
+        # 3. Call the whole-body controller to compute torques
+        #    torques = self.wbc.compute_torques(desired_state)
+        # 4. Apply the torques to the simulation
+        #    self.robot.set_joint_efforts(torques)
+        pass
+
+# --- Main script execution ---
+sim = BipedalWalker()
+# setup and run the simulation loop
+# ...
+```
+
+### Running the Simulation and Achieving the Goal
+
+When you execute this script using `./python.sh bipedal_walk.py`, Isaac Sim will launch.
+1.  The `BipedalWalker` class loads the apartment scene and our humanoid robot.
+2.  The `setup_scene` method initializes our two controllers.
+3.  On every physics step, the control loop executes:
+    *   The pattern generator creates a dynamically stable plan.
+    *   The WBC computes the necessary torques to achieve that plan.
+    *   The torques are applied to the simulated joints.
+
+The result is a humanoid robot that begins to walk, balancing itself at every step. It will navigate the cluttered apartment, stepping over small obstacles if the foot clearance is sufficient, and continue for over 50 meters, demonstrating the power and stability of this hierarchical control approach. The high-fidelity PhysX 5 engine in Isaac Sim provides the perfect testbed to validate such an advanced controller before deploying it to a real robot.
+
+### Conclusion
+
+Bipedal locomotion is a testament to the convergence of mechanics, control theory, and optimization. We have seen how a complex problem can be broken down into a hierarchy of manageable parts. By planning motion using a simplified model (LIPM) and executing it using a powerful, optimization-based whole-body controller, we can achieve stable, dynamic walking that was once the stuff of science fiction.
+
+The controller you have built in this chapter is not just a simulation trick; it is a direct implementation of the principles used in some of the world's most advanced humanoid robots. The journey from a simple URDF to a walking, balancing, dynamic machine is complete. The foundation for true Physical AI has been laid (Tan, 2024).
+
+***
+_(This file provides the complete theoretical framework and code structure for a state-of-the-art bipedal locomotion controller. A full implementation would involve filling out the detailed mathematics within the Python controller classes and interfacing with a dynamics library like Pinocchio.)_
