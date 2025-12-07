@@ -1,0 +1,18 @@
+/**
+ * Any CSS rules defined here will be applied across the entire Docusaurus site.
+ */
+
+:root {
+  --ifm-color-primary: #00ff9d;
+  --ifm-color-primary-dark: #00e68c;
+  --ifm-color-primary-darker: #00d37e;
+  --ifm-color-primary-darkest: #00b368;
+  --ifm-color-primary-light: #1affad;
+  --ifm-color-primary-lighter: #33ffb8;
+  --ifm-color-primary-lightest: #66ffcc;
+}
+
+/* For themes that use a different variable name for primary color */
+:root[data-theme='dark'] {
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

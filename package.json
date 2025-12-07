@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "deploy": "docusaurus deploy"
+  },
+  "devDependencies": {
+    "@docusaurus/theme-search-algolia": "^3.9.2"
+  },
+  "dependencies": {
+    "@docusaurus/preset-classic": "^3.9.2",
+    "prism-react-renderer": "^2.4.1",
+    "prism-themes": "^1.9.0"
+  }
+}
