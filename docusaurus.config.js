@@ -1,53 +1,100 @@
-module.exports = {
+import { themes as prismThemes } from 'prism-react-renderer';
+
+// @ts-check
+/** @type {import('@docusaurus/types').Config} */
+const config = {
   title: 'Physical AI and Humanoid Robotics',
   tagline: '100% Written by Gemini 2.5 Flash CLI',
-  url: 'http://localhost:3000',
-  baseUrl: '/',
+  url: 'https://bariqa-anwar.github.io',
+  baseUrl: '/humanoid-robotics/',
+
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'your-name', // Replace with your name or leave as is
+
+  // GitHub Pages deployment config
+  organizationName: 'bariqa-anwar',
   projectName: 'humanoid-robotics',
+  trailingSlash: false,
+
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en'],
+  },
+
   themeConfig: {
-    algolia: {
-      appId: 'YOUR_APP_ID',
-      apiKey: 'YOUR_SEARCH_API_KEY',
-      indexName: 'YOUR_INDEX_NAME',
-      contextualSearch: true,
-    },
     navbar: {
       title: 'Physical AI Book',
+      logo: {
+        alt: 'Physical AI Logo',
+        src: 'img/logo.svg',
+      },
       items: [
-        {to: 'docs/intro', label: 'Home', position: 'left'},
-        {to: 'docs/modules/01-ros2/00-overview', label: 'Modules', position: 'left'},
+        { to: '/docs/intro', label: 'Home', position: 'left' },
+        { to: '/docs/modules/01-ros2/00-overview', label: 'Modules', position: 'left' },
+        {
+          href: 'https://github.com/bariqa-anwar/humanoid-robotics',
+          label: 'GitHub',
+          position: 'right',
+        },
       ],
     },
+
     footer: {
       style: 'dark',
-      copyright: '© 2025 – 100 % Gemini 2.5 Flash CLI authored',
+      links: [
+        {
+          title: 'Community',
+          items: [
+            {
+              label: 'Discord',
+              href: 'https://discord.gg/your-invite',
+            },
+          ],
+        },
+      ],
+      copyright: `© ${new Date().getFullYear()} – 100% authored by Gemini 2.5 Flash CLI`,
     },
+
     prism: {
-      theme: 'github',
-      darkTheme: 'dracula',
+      theme: prismThemes.github,
+      darkTheme: prismThemes.dracula,
+      additionalLanguages: [
+        'bash',
+        'python',
+        'cpp',
+        'cmake',
+        'yaml',
+        'docker',
+        'rust',
+        'matlab',
+      ],
     },
+
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: false,
       respectPrefersColorScheme: true,
     },
   },
+
   presets: [
     [
-      '@docusaurus/preset-classic',
-      {
+      'classic',
+      /** @type {import('@docusaurus/preset-classic').Options} */
+      ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://example.com/edit/',
+          routeBasePath: 'docs',
+          editUrl: 'https://github.com/bariqa-anwar/humanoid-robotics/edit/main/',
         },
+        blog: false,
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
-      },
+      }),
     ],
   ],
 };
+
+module.exports = config;
