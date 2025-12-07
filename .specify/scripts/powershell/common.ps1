@@ -98,6 +98,12 @@ function Get-FeaturePathsEnv {
     $hasGit = Test-HasGit
     $featureDir = Get-FeatureDir -RepoRoot $repoRoot -Branch $currentBranch
     
+    $tasksPath = if ($currentBranch -eq "main") {
+        Join-Path $repoRoot 'tasks.md'
+    } else {
+        Join-Path $featureDir 'tasks.md'
+    }
+
     [PSCustomObject]@{
         REPO_ROOT     = $repoRoot
         CURRENT_BRANCH = $currentBranch
@@ -105,7 +111,7 @@ function Get-FeaturePathsEnv {
         FEATURE_DIR   = $featureDir
         FEATURE_SPEC  = Join-Path $featureDir 'spec.md'
         IMPL_PLAN     = Join-Path $featureDir 'plan.md'
-        TASKS         = Join-Path $featureDir 'tasks.md'
+        TASKS         = $tasksPath
         RESEARCH      = Join-Path $featureDir 'research.md'
         DATA_MODEL    = Join-Path $featureDir 'data-model.md'
         QUICKSTART    = Join-Path $featureDir 'quickstart.md'
