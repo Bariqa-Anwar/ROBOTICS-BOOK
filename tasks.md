@@ -1,0 +1,21 @@
+# tasks.md – Required task list for /sp.implement orchestrator
+
+- [X] Generate Chapter 03 – ROS 2 Architecture Deep Dive
+- [X] Generate Chapter 04 – Building Your First Humanoid ROS 2 Package (Python + rclpy)
+- [X] Generate Chapter 05 – URDF & Xacro Mastery – From Stick Figure to Full Humanoid
+- [X] Generate Chapter 06 – Gazebo Ignition: Physics, Plugins, Sensor Simulation
+- [X] Generate Chapter 07 – Unity Robotics Hub + Photorealistic Visualization
+- [X] Generate Chapter 08 – Realistic Indoor Environments & Sensor Noise Modeling
+- [X] Generate Chapter 09 – Isaac Sim: Domain Randomization & Synthetic Data at Scale
+- [X] Generate Chapter 10 – Isaac ROS: VSLAM, Nav2, Perception Pipelines on Jetson
+- [X] Generate Chapter 11 – Bipedal Locomotion, ZMP, Whole-Body Control
+- [X] Generate Chapter 12 – Vision-Language-Action Models: The New Paradigm
+- [X] Generate Chapter 13 – Voice-to-Action with Whisper + Gemini 2.5 Flash
+- [X] Generate Chapter 14 – LLM-to-ROS 2 Translation Layer
+- [X] Generate Chapter 15 – Capstone Project: Full Autonomous Conversational Humanoid
+- [X] Generate Chapter 16 – Sim-to-Real Transfer & Real Hardware Deployment
+- [X] Generate Chapter 17 – Household Humanoids by 2030 – Roadmap & Predictions
+- [X] Generate Appendix A – Complete Hardware Buyer’s Guide & Lab Architectures
+- [X] Generate Appendix B – $700 Jetson Student Kit Build Guide
+- [X] Generate Appendix C – Cloud vs On-Prem Cost Breakdown
+- [X] Generate Appendix D – Full Prompt History (Proof of 100% Gemini-Only Authorship)

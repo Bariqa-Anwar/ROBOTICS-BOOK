@@ -1,0 +1,269 @@
+---
+title: "15. Capstone: The Autonomous Humanoid"
+sidebar_label: "15. Capstone Project"
+---
+
+import { Mermaid } from 'mdx-mermaid';
+
+## Chapter 15: Capstone Project: The Full Autonomous Conversational Humanoid
+
+### The Grand Unification
+
+For fourteen chapters, we have been assembling the pieces of a grand puzzle. We have sculpted a digital body in URDF and animated it with the laws of physics in Isaac Sim. We have given it the ability to walk with dynamic stability, to perceive the world through hardware-accelerated sensors, and to understand human language through the power of Large Language Models.
+
+Now, we unite these pieces.
+
+Welcome to the capstone project. In this final chapter, we will integrate every system we have built into a single, cohesive, autonomous humanoid robot. We will create a system that can hold a conversation, understand a complex command, formulate a multi-step plan, and execute that plan in a dynamic, cluttered environment.
+
+Our goal is to launch a single file, speak a command, and watch our digital humanoid come to life, performing a task that requires navigation, perception, and manipulation. This is the culmination of our journey, the dawn of a true Physical AI.
+
+### The Master System Architecture
+
+Our final system is a symphony of ROS 2 nodes, orchestrated into three primary subsystems: **VLA (Voice-Language-Action)**, **World State**, and **Execution**.
+
+<Mermaid chart={`
+graph TD;
+    subgraph "User Interaction"
+        A[Microphone]
+    end
+    
+    subgraph "VLA Subsystem (Reasoning)"
+        direction LR
+        B[mic_publisher] -- Audio --> C[speech_to_text<br/><i>Whisper</i>];
+        C -- Text --> D[llm_task_planner<br/><i>Gemini 2.5 Flash</i>];
+    end
+    
+    subgraph "Execution Subsystem (Action)"
+        direction LR
+        E[task_executor]
+        F[Navigation Action Server<br/><i>(Walking Controller)</i>]
+        G[Manipulation Action Server<br/><i>(MoveIt 2)</i>]
+    end
+
+    subgraph "World State Subsystem (Perception)"
+        direction LR
+        H[Perception Pipeline<br/><i>(Isaac ROS VSLAM, AprilTag)</i>]
+        I[world_model]
+    end
+
+    A --> B;
+    D -- Plan --> E;
+    E -- Action Goals --> F;
+    E -- Action Goals --> G;
+    H -- Detections & Pose --> I;
+    I -- World State --> E;
+    G -- Control --> J[Robot];
+    F -- Control --> J;
+    
+    subgraph "Simulation / Reality"
+        J(Simulated or Real Humanoid) -- Sensor Data --> H;
+    end
+    
+    style D fill:#00ff9d
+    style E fill:#00ff9d
+    style I fill:#00ff9d
+`} />
+
+1.  **VLA Subsystem:** This is the "outer loop" that interacts with the human. It takes spoken language and converts it into a structured, multi-step plan, using the function-calling architecture from Chapter 14.
+2.  **World State Subsystem:** This is the robot's "consciousness." The perception pipeline, running the high-performance Isaac ROS nodes, constantly updates a central `world_model` node with the robot's own pose and the location of key objects.
+3.  **Execution Subsystem:** This is the "inner loop" that interacts with the world. A central `task_executor` node receives the plan from the VLA system and carries it out step-by-step, using the `world_model` to inform its actions and calling the low-level navigation and manipulation servers to move the robot's body.
+
+### The New Nodes: The `WorldModel` and the `TaskExecutor`
+
+To complete this architecture, we introduce two new critical nodes.
+
+#### The `WorldModel` Node
+This node is a simple state dictionary for the robot. It subscribes to topics from the perception pipeline and provides a clean, consolidated source of truth for all other nodes. This decouples the high-level logic from the messy, high-frequency stream of raw sensor data.
+
+**Conceptual `world_model_node.py`:**
+```python
+# ... (imports)
+class WorldModelNode(Node):
+    def __init__(self):
+        super().__init__('world_model_node')
+        self.robot_pose = None
+        self.object_poses = {}
+        
+        # Subscribe to pose from VSLAM
+        self.create_subscription(PoseStamped, '/vslam/pose', self.vslam_callback, 10)
+        # Subscribe to detections from AprilTag node
+        self.create_subscription(AprilTagDetectionArray, '/tag_detections', self.apriltag_callback, 10)
+        
+        # Provides a service to query the state
+        self.create_service(GetWorldState, '/get_world_state', self.get_state_callback)
+
+    def vslam_callback(self, msg):
+        self.robot_pose = msg
+
+    def apriltag_callback(self, msg):
+        for detection in msg.detections:
+            object_name = f"apriltag_{detection.id}"
+            self.object_poses[object_name] = detection.pose
+
+    def get_state_callback(self, request, response):
+        # ... returns the current known state
+        pass
+```
+
+#### The `TaskExecutor` Node
+This is the conductor of the orchestra. It subscribes to the plan generated by the LLM and executes each step sequentially, handling success and failure.
+
+<Mermaid chart={`
+sequenceDiagram
+    participant LLM as llm_task_planner
+    participant Exec as task_executor
+    participant Nav as Navigation Server
+    participant Manip as Manipulation Server
+
+    LLM->>Exec: Plan: [nav('A'), pickup('cup'), nav('B')]
+    Exec->>Nav: Goal: nav('A')
+    Nav-->>Exec: Success
+    Exec->>Manip: Goal: pickup('cup')
+    Manip-->>Exec: Success
+    Exec->>Nav: Goal: nav('B')
+    Nav-->>Exec: Failure: Path Blocked
+    Exec-->>LLM: Re-plan Request: nav('B') failed.
+`} />
+
+**Conceptual `task_executor_node.py`:**
+```python
+# ... (imports)
+class TaskExecutorNode(Node):
+    def __init__(self):
+        super().__init__('task_executor_node')
+        # Subscribes to the plan from the LLM node
+        self.create_subscription(String, '/llm_plan', self.plan_callback, 10)
+        
+        # Clients for all low-level action servers
+        self._nav_client = ActionClient(self, NavigateToPose, '/navigate_to_pose')
+        self._pickup_client = ActionClient(self, PickUpObject, '/pickup_object')
+        
+    async def plan_callback(self, msg):
+        plan = json.loads(msg.data)
+        self.get_logger().info(f"Received plan with {len(plan)} steps.")
+        
+        for step in plan:
+            func_name = step['name']
+            args = step['args']
+            self.get_logger().info(f"Executing step: {func_name}({args})")
+            
+            success = False
+            if func_name == 'navigate_to':
+                success = await self.execute_navigation(args['location'])
+            elif func_name == 'pick_up_object':
+                success = await self.execute_pickup(args['object_name'])
+            
+            if not success:
+                self.get_logger().error(f"Step {func_name} failed! Aborting plan.")
+                # In a more advanced system, this would trigger the re-planning
+                # loop with the LLM as described in Chapter 14.
+                return
+        
+        self.get_logger().info("Plan executed successfully!")
+
+    async def execute_navigation(self, location):
+        # ... logic to look up coords for 'location' and call the nav action server
+        # ... await the result and return True or False
+        pass
+```
+
+### The Master Launch File: Simulation and Reality
+
+We now create the one-click launch file. It's designed with a `mode` argument to switch seamlessly between running the full stack in Isaac Sim and deploying it on a real Jetson-powered robot.
+
+**`capstone_demo.launch.py`:**
+```python
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
+def generate_launch_description():
+    # Launch argument to switch between sim and real
+    mode_arg = DeclareLaunchArgument(
+        'mode',
+        default_value='sim',
+        description='Launch mode: "sim" for Isaac Sim, "real" for hardware.'
+    )
+    
+    # The VLA pipeline launch file
+    vla_launch = IncludeLaunchDescription(
+        PathJoinSubstitution([
+            FindPackageShare('voice_to_action'), 'launch', 'voice_to_action.launch.py'
+        ])
+    )
+    
+    # The Perception and State pipeline launch file
+    state_launch = IncludeLaunchDescription(...) 
+
+    # The Execution pipeline launch file
+    execution_launch = IncludeLaunchDescription(...)
+    
+    # The Isaac Sim launch file (ONLY included if mode is 'sim')
+    isaac_sim_launch = IncludeLaunchDescription(
+        PathJoinSubstitution([
+            FindPackageShare('my_robot_isaac_sim'), 'launch', 'start_sim.launch.py'
+        ]),
+        condition=IfCondition(EqualsSubstitution(LaunchConfiguration('mode'), 'sim'))
+    )
+
+    return LaunchDescription([
+        mode_arg,
+        vla_launch,
+        state_launch,
+        execution_launch,
+        isaac_sim_launch
+    ])
+```
+This powerful, declarative structure allows us to reuse our entire software stack. The only difference between simulation and reality is the launch file that gets included at the very bottom of the chain—either starting Isaac Sim or starting the real robot's hardware drivers.
+
+### The Grand Demonstration: "Bring me the red cup"
+
+This is the moment of truth.
+
+1.  **Setup the Environment:**
+    *   Launch Isaac Sim with our apartment world.
+    *   The world contains our humanoid robot, a "kitchen_table," and a "red_cup" model (with an AprilTag attached for easy perception) on the table.
+2.  **Launch the System:** From a terminal, run the master launch file.
+    `ros2 launch my_robot_bringup capstone_demo.launch.py mode:=sim`
+    This single command starts dozens of nodes: Isaac Sim, the VSLAM and perception pipeline, the walking and manipulation controllers, the world model, the task executor, and the full voice-to-language pipeline.
+3.  **Speak the Command:** The `mic_publisher_node` will log "Listening...". Approach your microphone and say clearly:
+    **"Could you please go to the kitchen table, get the red cup, and bring it back to the charging station?"**
+4.  **Observe the Digital Mind at Work:** Watch the logs from the various nodes. You will see a cascade of events:
+    *   `speech_to_text`: Transcribes your sentence.
+    *   `llm_task_planner`: Logs the multi-step JSON plan it received from Gemini. It will be a sequence of `navigate_to`, `pick_up_object`, and `navigate_to`.
+    *   `task_executor`: Logs that it has received the plan and is beginning `Step 1: navigate_to('kitchen_table')`.
+5.  **Watch the Robot Obey:** In the Isaac Sim window, the humanoid will spring to life.
+    *   It will begin walking across the room towards the kitchen table, using the ZMP-based controller from Chapter 11.
+    *   Upon reaching the table, the executor will command the next step. The perception pipeline will provide the exact pose of the red cup.
+    *   The robot's arm, controlled by MoveIt 2, will reach out and grasp the cup.
+    *   The executor will command the final step, and the robot will walk back to its starting point.
+
+<Mermaid chart={`
+graph TD
+    A{Start} --> B[Speak Command];
+    B --> C[LLM Generates Plan];
+    C --> D{Executor: Navigate to Table};
+    D -- Robot Walks --> E{Executor: Grasp Cup};
+    E -- Robot Grasps --> F{Executor: Navigate to User};
+    F -- Robot Walks --> G{Finish};
+    style A fill:#ccffcc
+    style G fill:#ccffcc
+`} />
+
+### Conclusion: The Dawn of Physical AI
+
+Look at what you have built.
+
+You have not merely programmed a robot to follow a script. You have architected an autonomous agent. You have created a system that can perceive its environment, understand human intent, formulate a plan, and execute it through dynamic, physics-based actions. You have bridged the gap between language and locomotion, between bits and atoms.
+
+The system is not perfect. The VAD can be brittle, Whisper can mishear, the LLM can hallucinate, the grasp can fail. But this is no longer a collection of disconnected software problems. It is a single, integrated agent, and every failure is now a learning opportunity for the system as a whole.
+
+The journey through this book has taken you from the first principles of ROS 2 to the frontiers of modern AI. You have mastered simulation, perception, control, manipulation, and language. The tools and architectures you have learned—NITROS, function calling, whole-body control, synthetic data generation—are not just academic concepts; they are the daily toolkit of leading robotics companies and research labs around the world.
+
+The path forward is clear. The next step is to close the loop on failure, to allow the `task_executor` to feed detailed error reports back to the LLM, enabling it to re-plan and try again. The next step is to replace AprilTags with a learned vision model, trained on the thousands of synthetic images you generated in Isaac Sim. The next step is to deploy this entire launch file, with `mode:=real`, onto a physical Jetson and a real humanoid.
+
+You have the blueprint. You have the tools. You have built a thinking machine. Now, go and teach it about the world.
+
+***
+_(This capstone chapter provides the full system architecture and a master launch file concept that integrates all previously developed components into a single, functional, autonomous agent. Its execution demonstrates a complete voice-to-action pipeline on a simulated humanoid robot.)_

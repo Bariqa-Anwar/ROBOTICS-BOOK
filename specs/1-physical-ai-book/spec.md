@@ -1,0 +1,97 @@
+# Feature Specification: Physical AI & Humanoid Robotics Book
+
+**Feature Branch**: `1-physical-ai-book`
+**Created**: 2025-12-06
+**Status**: Draft
+**Input**: User description: "Physical AI and Humanoid Robotics Book – Written Exclusively by Gemini 2.5 Flash..."
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Student Capstone Project (Priority: P1)
+
+As a university student, I want to follow a 13-week course using the book to build a simulated, voice-controlled humanoid robot, so that I can gain practical skills in physical AI.
+
+**Why this priority**: This is the primary use case and validates the book's effectiveness as a hands-on textbook.
+
+**Independent Test**: A student can complete all tutorials from Chapter 1 to 12 and have a functioning, voice-controlled simulated humanoid that can walk, see, and manipulate objects. Hardware-specific recipes may be provided, but are not mandatory.
+
+**Acceptance Scenarios**:
+
+1.  **Given** the completion of Chapter 4, **When** the user runs the ROS 2 package, **Then** a basic humanoid model appears and is interactive in the Gazebo simulation.
+2.  **Given** the completion of Chapter 12, **When** the user issues a voice command like "pick up the red cube", **Then** the simulated robot navigates to the cube, correctly identifies it, grasps it, and lifts it successfully.
+
+---
+
+### User Story 2 - Researcher State-of-the-Art Review (Priority: P2)
+
+As a researcher, I want to read the book to understand the current landscape of humanoid robotics (2024–2026) and the practical application of Vision-Language-Action (VLA) models, so I can stay current with the state-of-the-art.
+
+**Why this priority**: This validates the book's technical accuracy and relevance to a professional audience.
+
+**Independent Test**: A researcher finds the information in Chapters 2, 10, and 14 to be accurate, well-cited, and reflective of current industry and academic trends.
+
+**Acceptance Scenarios**:
+
+1.  **Given** the book's reference list, **When** a user checks the sources for Chapters 2 and 10, **Then** they are credible (peer-reviewed, official docs) and primarily published between 2020–2025.
+
+---
+
+### User Story 3 - AI Authorship Verification (Priority: P3)
+
+As a project verifier, I want to clone the book's repository and regenerate the entire content using the committed prompts, so that I can prove 100% Gemini-only authorship.
+
+**Why this priority**: This fulfills a core, non-functional requirement and a key part of the project's unique value proposition.
+
+**Independent Test**: Running a generation script using the prompts from the `history/prompts/` directory produces a Docusaurus site identical in content to the officially committed version.
+
+**Acceptance Scenarios**:
+
+1.  **Given** the final repository, **When** a user runs the documented reproduction script, **Then** the locally generated Docusaurus site content matches the live GitHub Pages site content, file by file.
+
+---
+
+### Edge Cases
+
+- What happens if a student has a slightly different hardware configuration? The "Hardware Buyer's Guide" (Appendix A) should provide compatibility guidelines.
+- How does the system handle ambiguous voice commands? The voice-to-action pipeline (Chapter 11) should define a fallback behavior, such as asking for clarification.
+
+## Clarifications
+### Session 2025-12-07
+- Q: What specific metrics or standards define a "professional-grade" book, beyond just the Lighthouse score for the website? → A: A professional-grade book = technically accurate, beautifully designed Docusaurus site with ≥ 97 Lighthouse scores, zero broken code snippets, full APA citations, and content that feels indistinguishable from a human robotics professor.
+- Q: What assumed prior knowledge (e.g., Python, Linux, specific ROS 2 concepts) do students need before starting the book? → A: The book assumes students already know basic Python, Linux command line, and Git. No beginner Linux/Python tutorials needed.
+- Q: What specific open-source licenses (e.g., MIT, Apache 2.0) should be applied to the book's content (text, code, diagrams) and generated assets? → A: The book is 100 % simulation-focused for the main content. Real-hardware deployment (Jetson, RealSense, Unitree, etc.) is fully explained and tested in simulation → real recipes are provided, but every code snippet and tutorial must run perfectly in simulation only (no mandatory physical robot required to complete the book or the capstone)
+- Q: How should potential version conflicts or differences between ROS 2 Humble and Iron be addressed throughout the book (e.g., separate code examples, clear deprecation notes, focus on one version)? → A: Focus primarily on ROS 2 Humble, noting key differences or providing separate snippets for Iron where functionality diverges significantly.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+-   **FR-001**: The book content MUST be 100% generated by the Gemini 2.5 Flash model via the `gemini` CLI.
+-   **FR-002**: The book's content MUST be structured into the 14 chapters and 4 appendices specified in the project description.
+-   **FR-003**: The total word count MUST be between 45,000 and 60,000 words.
+-   **FR-004**: The book MUST cite a minimum of 80 sources, with at least 60% from peer-reviewed papers or official NVIDIA/ROS documentation dated 2020–2025.
+-   **FR-005**: All code examples MUST be tested and functional on Ubuntu 22.04 with ROS 2 Humble (LTS). Key differences or specific snippets for ROS 2 Iron will be provided where functionality significantly diverges. NVIDIA Isaac Sim 2023.1.1 or newer is also required.
+-   **FR-006**: The final published output MUST be a Docusaurus 3.x website deployed to GitHub Pages.
+-   **FR-007**: The project scope MUST NOT include detailed electrical engineering, custom low-level firmware, or training reinforcement learning models from scratch.
+-   **FR-008**: The book MUST contain zero broken code snippets and the content MUST feel indistinguishable from that written by a human robotics professor.
+-   **FR-009**: The book assumes students have basic proficiency in Python programming, Linux command-line operations, and Git version control. Beginner tutorials for these topics are explicitly out of scope.
+-   **FR-010**: The main content of the book is 100% simulation-focused. All code snippets and tutorials MUST run perfectly in simulation only, without requiring mandatory physical robot hardware. Real-hardware deployment recipes will be provided and explained, but are not required to complete the book or capstone project.
+
+### Key Entities *(include if feature involves data)*
+
+-   **Book**: The primary artifact, a collection of chapters, appendices, and configuration files.
+-   **Chapter**: A self-contained markdown (MDX) file focusing on a specific topic, containing prose, code snippets, diagrams, and citations.
+-   **Code Snippet**: A runnable block of code (e.g., Python/ROS 2) used to demonstrate a technical concept.
+-   **Diagram**: A visual explanation of an architecture or process, created using Mermaid syntax or as a Gemini-generated SVG.
+-   **Citation**: A reference to an external source, formatted in APA 7th edition and linked appropriately.
+-   **Prompt**: A text input to the Gemini CLI, version-controlled in the `history/prompts/` directory for reproducibility.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+-   **SC-001**: The complete book is published and publicly accessible as a Docusaurus site on GitHub Pages by February 28, 2026.
+-   **SC-002**: The deployed website achieves a Lighthouse score of ≥ 97 across all four categories (Performance, Accessibility, Best Practices, SEO).
+-   **SC-003**: An independent technical reviewer rates the book's technical accuracy, practical utility, and the indistinguishability of its content from a human robotics professor at ≥ 8.5 out of 10. The book will feature zero broken code snippets and full APA citations.
+-   **SC-004**: The entire book's content can be successfully regenerated from the version-controlled prompts, with a diff showing no changes from the committed text.
+-   **SC-005**: At least 90% of students in a pilot course who complete the exercises in Chapter 12 can successfully demonstrate a simulated humanoid performing a voice-activated pick-and-place task.

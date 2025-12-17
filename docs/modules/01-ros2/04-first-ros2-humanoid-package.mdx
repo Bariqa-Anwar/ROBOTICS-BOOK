@@ -1,0 +1,570 @@
+---
+title: "04. Building Your First Humanoid ROS 2 Package"
+sidebar_label: "04. First ROS 2 Package"
+---
+
+import { Mermaid } from 'mdx-mermaid';
+
+## Chapter 04: Building Your First Humanoid ROS 2 Package (Python + rclpy)
+
+### Introduction: From Concepts to Code
+
+In Chapter 3, we explored the foundational architecture of ROS 2: the decentralized power of DDS, the modularity of nodes, and the various communication patterns like topics, services, and actions. These are the abstract building blocks. Now, it's time to translate that theory into practice.
+
+This chapter marks a significant step. We will move beyond standalone Python scripts and learn how to structure, build, and run our code within a proper ROS 2 **package**. A package is the fundamental unit of organization in ROS 2, encapsulating nodes, messages, services, actions, launch files, and all related resources. By the end of this chapter, you will have built your first fully functional ROS 2 package, containing nodes that publish, subscribe, offer services, and interact with actions—all essential for a humanoid robot.
+
+We will focus exclusively on Python, using the `rclpy` client library, as it offers a faster development cycle and is widely adopted for high-level robotics applications.
+
+### 4.1 The ROS 2 Package Structure
+
+A ROS 2 package is a directory with a specific internal structure and, crucially, a `package.xml` manifest file that describes it.
+
+**Minimal Package Structure:**
+```
+my_ros2_package/
+├── package.xml
+├── setup.py        (for Python packages)
+├── resource/
+└── my_ros2_package/
+    ├── __init__.py
+    ├── my_publisher_node.py
+    └── my_subscriber_node.py
+```
+*Figure 4.1: Minimal ROS 2 Python package structure.*
+
+*   **`package.xml`:** The manifest file. It contains metadata about the package (name, version, description, maintainers, license) and lists its dependencies (build-time, run-time, test-time).
+*   **`setup.py`:** For Python packages, this file instructs `colcon` (the build tool) on how to install your Python modules and create executable scripts.
+*   **`resource/`:** An optional directory used for custom resources.
+*   **`my_ros2_package/` (inner directory):** This is where your actual Python source code lives. It must contain an `__init__.py` file to be recognized as a Python package.
+
+### 4.2 Creating a New ROS 2 Package
+
+Let's create a new package named `humanoid_core_pkg`.
+
+1.  **Navigate to your Workspace:** Make sure you are in the `src` directory of your ROS 2 workspace (e.g., `~/ros2_ws/src`).
+    ```bash
+    cd ~/ros2_ws/src
+    ```
+2.  **Create the Package:** Use the `ros2 pkg create` command.
+    ```bash
+    ros2 pkg create --build-type ament_python humanoid_core_pkg
+    ```
+    *   `--build-type ament_python`: Specifies that this is a Python package.
+    *   `humanoid_core_pkg`: The name of your new package.
+
+    This command creates the `humanoid_core_pkg` directory and populates it with a `package.xml` and `setup.py` template.
+
+### 4.3 Understanding `package.xml` and `setup.py`
+
+#### `package.xml`
+This file is crucial for package management. Let's look at the generated `package.xml` and then add our dependencies.
+
+**`humanoid_core_pkg/package.xml`:**
+```xml
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>humanoid_core_pkg</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="user@todo.todo">user</maintainer>
+  <license>TODO: License declaration</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>example_interfaces</depend> <!-- For services and actions examples -->
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+```
+We've added `<depend>rclpy</depend>`, `<depend>std_msgs</depend>`, and `<depend>example_interfaces</depend>`. These declare that our package relies on these other ROS 2 packages to compile and run.
+
+#### `setup.py`
+This file handles the Python-specific build logic. It tells `colcon` where to find your Python source files and which scripts should become executable.
+
+**`humanoid_core_pkg/setup.py`:**
+```python
+from setuptools import find_packages, setup
+import os
+from glob import glob
+
+package_name = 'humanoid_core_pkg'
+
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=find_packages(exclude=['test']),
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        # Include launch files
+        (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy]*'))),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='user',
+    maintainer_email='user@todo.todo',
+    description='TODO: Package description',
+    license='TODO: License declaration',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'minimal_node = humanoid_core_pkg.minimal_node:main',
+            'simple_publisher = humanoid_core_pkg.simple_publisher:main',
+            'simple_subscriber = humanoid_core_pkg.simple_subscriber:main',
+            'add_two_ints_server = humanoid_core_pkg.add_two_ints_server:main',
+            'add_two_ints_client = humanoid_core_pkg.add_two_ints_client:main',
+            'fibonacci_action_server = humanoid_core_pkg.fibonacci_action_server:main',
+            'fibonacci_action_client = humanoid_core_pkg.fibonacci_action_client:main',
+        ],
+    },
+)
+```
+The key section for us is `entry_points['console_scripts']`. This tells `colcon` to create executable commands from our Python scripts. For example, `minimal_node = humanoid_core_pkg.minimal_node:main` means that after building, you can run `ros2 run humanoid_core_pkg minimal_node` to execute the `main` function in `minimal_node.py` within our package.
+
+We also added a `data_files` entry to include launch files, which we'll cover later.
+
+### 4.4 Implementing Communication Patterns within a Package
+
+Let's populate our `humanoid_core_pkg` with the nodes we discussed in Chapter 3, and add new ones for services and actions.
+
+First, create the `humanoid_core_pkg` Python directory inside your package:
+```bash
+mkdir -p ~/ros2_ws/src/humanoid_core_pkg/humanoid_core_pkg
+touch ~/ros2_ws/src/humanoid_core_pkg/humanoid_core_pkg/__init__.py
+```
+
+#### 4.4.1 Topics: Publisher and Subscriber
+
+**`humanoid_core_pkg/humanoid_core_pkg/minimal_node.py`**
+*(Copy the content of `minimal_node.py` from Chapter 3 into this file)*
+
+**`humanoid_core_pkg/humanoid_core_pkg/simple_publisher.py`**
+*(Copy the content of `simple_publisher.py` from Chapter 3 into this file)*
+
+**`humanoid_core_pkg/humanoid_core_pkg/simple_subscriber.py`**
+*(Copy the content of `simple_subscriber.py` from Chapter 3 into this file)*
+
+#### 4.4.2 Services: Server and Client
+
+Services require a specific message definition. ROS 2's `example_interfaces` package provides a simple `AddTwoInts` service that we can use.
+
+<Mermaid chart={`
+graph TD;
+    A[AddTwoInts.srv] --> B[Request: int64 a, int64 b];
+    A --> C[Response: int64 sum];
+`} />
+*Figure 4.2: Structure of the `AddTwoInts` service message.*
+
+**`humanoid_core_pkg/humanoid_core_pkg/add_two_ints_server.py`**
+```python
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+class AddTwoIntsServer(Node):
+    def __init__(self):
+        super().__init__('add_two_ints_server')
+        # Create a service:
+        # 1. Service type (AddTwoInts)
+        # 2. Service name ('add_two_ints')
+        # 3. Callback function (self.add_two_ints_callback)
+        self.srv = self.create_service(AddTwoInts, 'add_two_ints', self.add_two_ints_callback)
+        self.get_logger().info('AddTwoInts service server ready.')
+
+    def add_two_ints_callback(self, request, response):
+        """
+        Callback function for the AddTwoInts service.
+        It receives a request and populates the response.
+        """
+        response.sum = request.a + request.b
+        self.get_logger().info(f'Incoming request: a={request.a}, b={request.b}. Returning sum={response.sum}')
+        return response
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = AddTwoIntsServer()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+*Figure 4.3: Python code for a ROS 2 service server.*
+
+**`humanoid_core_pkg/humanoid_core_pkg/add_two_ints_client.py`**
+```python
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+import sys
+
+class AddTwoIntsClient(Node):
+    def __init__(self):
+        super().__init__('add_two_ints_client')
+        # Create a client:
+        # 1. Service type (AddTwoInts)
+        # 2. Service name ('add_two_ints')
+        self.client = self.create_client(AddTwoInts, 'add_two_ints')
+        
+        # Wait for the service server to become available
+        while not self.client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service not available, waiting again...')
+        
+        self.request = AddTwoInts.Request() # Create a request object
+
+    def send_request(self, a, b):
+        self.request.a = a
+        self.request.b = b
+        
+        # Send the request asynchronously and get a Future object
+        self.future = self.client.call_async(self.request)
+        
+        # Spin the node until the future is complete (response is received)
+        rclpy.spin_until_future_complete(self, self.future)
+        
+        # Check if the call was successful and return the result
+        if self.future.result() is not None:
+            return self.future.result().sum
+        else:
+            self.get_logger().error(f'Service call failed: {self.future.exception()}')
+            return None
+
+def main(args=None):
+    rclpy.init(args=args)
+    
+    # Check for command line arguments
+    if len(sys.argv) != 3:
+        print("Usage: ros2 run humanoid_core_pkg add_two_ints_client A B")
+        sys.exit(1)
+    
+    a = int(sys.argv[1])
+    b = int(sys.argv[2])
+
+    client_node = AddTwoIntsClient()
+    response_sum = client_node.send_request(a, b)
+    
+    if response_sum is not None:
+        client_node.get_logger().info(f'Result of add_two_ints: {response_sum}')
+    
+    client_node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+*Figure 4.4: Python code for a ROS 2 service client.*
+
+#### 4.4.3 Actions: Server and Client
+
+Actions also require a specific message definition. We'll use the `Fibonacci` action from `example_interfaces`.
+
+<Mermaid chart={`
+graph TD;
+    A[Fibonacci.action] --> B[Goal: int64 order];
+    A --> C[Result: int64[] sequence];
+    A --> D[Feedback: int64[] sequence];
+`} />
+*Figure 4.5: Structure of the `Fibonacci` action message.*
+
+**`humanoid_core_pkg/humanoid_core_pkg/fibonacci_action_server.py`**
+```python
+import rclpy
+from rclpy.action import ActionServer
+from rclpy.node import Node
+from example_interfaces.action import Fibonacci
+import time
+
+class FibonacciActionServer(Node):
+    def __init__(self):
+        super().__init__('fibonacci_action_server')
+        self._action_server = ActionServer(
+            self,
+            Fibonacci,
+            'fibonacci',
+            self.execute_callback)
+        self.get_logger().info('Fibonacci action server ready.')
+
+    def execute_callback(self, goal_handle):
+        self.get_logger().info(f'Received Fibonacci goal: {goal_handle.request.order}')
+        
+        feedback_msg = Fibonacci.Feedback()
+        feedback_msg.sequence = [0, 1] # Start with initial Fibonacci numbers
+
+        # Compute Fibonacci sequence and provide feedback
+        for i in range(1, goal_handle.request.order):
+            # Check for goal cancellation
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                self.get_logger().info('Goal canceled.')
+                return Fibonacci.Result()
+
+            feedback_msg.sequence.append(feedback_msg.sequence[i] + feedback_msg.sequence[i-1])
+            self.get_logger().info(f'Feedback: {feedback_msg.sequence}')
+            goal_handle.publish_feedback(feedback_msg)
+            time.sleep(0.5) # Simulate work being done
+
+        goal_handle.succeed() # Mark the goal as successful
+        result = Fibonacci.Result()
+        result.sequence = feedback_msg.sequence
+        self.get_logger().info('Goal succeeded.')
+        return result
+
+def main(args=None):
+    rclpy.init(args=args)
+    action_server = FibonacciActionServer()
+    rclpy.spin(action_server)
+    action_server.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+*Figure 4.6: Python code for a ROS 2 action server.*
+
+**`humanoid_core_pkg/humanoid_core_pkg/fibonacci_action_client.py`**
+```python
+import rclpy
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from example_interfaces.action import Fibonacci
+import sys
+
+class FibonacciActionClient(Node):
+    def __init__(self):
+        super().__init__('fibonacci_action_client')
+        self._action_client = ActionClient(self, Fibonacci, 'fibonacci')
+        self.get_logger().info('Fibonacci action client ready.')
+
+    def send_goal(self, order):
+        goal_msg = Fibonacci.Goal()
+        goal_msg.order = order
+
+        self._action_client.wait_for_server()
+        
+        # Send the goal asynchronously and add callbacks
+        self._send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected :(')
+            return
+
+        self.get_logger().info('Goal accepted :)')
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info(f'Result: {result.sequence}')
+        # rclpy.shutdown() # Don't shutdown here if you want to keep node alive
+
+    def feedback_callback(self, feedback_msg):
+        self.get_logger().info(f'Received feedback: {feedback_msg.feedback.sequence}')
+
+def main(args=None):
+    rclpy.init(args=args)
+    
+    if len(sys.argv) != 2:
+        print("Usage: ros2 run humanoid_core_pkg fibonacci_action_client <order>")
+        sys.exit(1)
+        
+    order = int(sys.argv[1])
+    
+    action_client = FibonacciActionClient()
+    action_client.send_goal(order)
+    rclpy.spin(action_client) # Keep the node alive to receive feedback/result
+    action_client.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+*Figure 4.7: Python code for a ROS 2 action client.*
+
+### 4.5 Launch Files: Orchestrating Your Robot System
+
+For complex robotic systems, manually running each node (`ros2 run ...`) is impractical. **Launch files** allow you to define a collection of nodes, parameters, and other commands to be executed with a single `ros2 launch` command. ROS 2 launch files are typically written in Python.
+
+First, create a `launch` directory inside your package:
+```bash
+mkdir -p ~/ros2_ws/src/humanoid_core_pkg/launch
+```
+
+**`humanoid_core_pkg/launch/core_nodes.launch.py`**
+```python
+import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
+def generate_launch_description():
+    # Get the path to our package
+    humanoid_core_pkg_dir = get_package_share_directory('humanoid_core_pkg')
+
+    return LaunchDescription([
+        # Launch the minimal node
+        Node(
+            package='humanoid_core_pkg',
+            executable='minimal_node',
+            name='my_minimal_node',
+            output='screen'
+        ),
+        # Launch the publisher
+        Node(
+            package='humanoid_core_pkg',
+            executable='simple_publisher',
+            name='my_publisher',
+            output='screen'
+        ),
+        # Launch the subscriber
+        Node(
+            package='humanoid_core_pkg',
+            executable='simple_subscriber',
+            name='my_subscriber',
+            output='screen'
+        ),
+        # Launch the AddTwoInts service server
+        Node(
+            package='humanoid_core_pkg',
+            executable='add_two_ints_server',
+            name='my_add_server',
+            output='screen'
+        ),
+        # Launch the Fibonacci action server
+        Node(
+            package='humanoid_core_pkg',
+            executable='fibonacci_action_server',
+            name='my_fib_server',
+            output='screen'
+        )
+    ])
+```
+*Figure 4.8: Python launch file to start multiple ROS 2 nodes.*
+
+To run this launch file (after building and sourcing your workspace):
+```bash
+ros2 launch humanoid_core_pkg core_nodes.launch.py
+```
+This will start all the defined nodes. You can then interact with them using `ros2 topic`, `ros2 service call`, or `ros2 run humanoid_core_pkg fibonacci_action_client`.
+
+<Mermaid chart={`
+graph TD;
+    L[core_nodes.launch.py] --> N1[my_minimal_node];
+    L --> N2[my_publisher];
+    L --> N3[my_subscriber];
+    L --> N4[my_add_server];
+    L --> N5[my_fib_server];
+    N2 -- chatter --> N3;
+    N4 -- add_two_ints --> AC1[add_two_ints_client];
+    N5 -- fibonacci --> AC2[fibonacci_action_client];
+`} />
+*Figure 4.9: ROS 2 graph after launching `core_nodes.launch.py`.*
+
+### 4.6 Building Your Package
+
+After creating your package, modifying `package.xml`, `setup.py`, and adding your Python scripts, you need to build it.
+
+1.  **Navigate to your Workspace Root:**
+    ```bash
+    cd ~/ros2_ws
+    ```
+2.  **Build Your Package:**
+    ```bash
+    colcon build --packages-select humanoid_core_pkg
+    ```
+    This command compiles your package, installs Python scripts as executables, and copies launch files to the install directory.
+
+3.  **Source the Workspace:** After every build, you *must* source the workspace to update your shell's environment variables to include your new executables and paths.
+    ```bash
+    source install/setup.bash # or setup.ps1 for PowerShell
+    ```
+
+### 4.7 Testing Your ROS 2 Package
+
+Testing is crucial for robust robotics development. ROS 2 integrates with standard Python testing frameworks like `pytest`.
+
+**`humanoid_core_pkg/test/test_simple_nodes.py`**
+```python
+import pytest
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String as StringMsg
+import time
+
+# A simple node to test message reception
+class TestSubscriber(Node):
+    def __init__(self):
+        super().__init__('test_subscriber')
+        self.received_msg = None
+        self.subscription = self.create_subscription(
+            StringMsg,
+            'chatter',
+            self.listener_callback,
+            10)
+
+    def listener_callback(self, msg):
+        self.received_msg = msg.data
+
+# Test case for publisher/subscriber interaction
+def test_publisher_subscriber_communication():
+    rclpy.init()
+    publisher_node = Node('test_publisher')
+    subscriber_node = TestSubscriber()
+    
+    # Create a publisher for the test
+    publisher = publisher_node.create_publisher(StringMsg, 'chatter', 10)
+    
+    # Give ROS time to establish connections
+    time.sleep(1)
+
+    # Publish a message
+    test_msg = StringMsg()
+    test_msg.data = "Test Message 123"
+    publisher.publish(test_msg)
+    publisher_node.get_logger().info(f'Published: "{test_msg.data}"')
+
+    # Spin the subscriber node briefly to receive the message
+    rclpy.spin_once(subscriber_node, timeout_sec=2)
+    
+    # Assert that the message was received correctly
+    assert subscriber_node.received_msg == "Test Message 123"
+
+    publisher_node.destroy_node()
+    subscriber_node.destroy_node()
+    rclpy.shutdown()
+
+# To run tests:
+# 1. cd ~/ros2_ws
+# 2. colcon test --packages-select humanoid_core_pkg
+# 3. colcon test-result --all --verbose
+```
+*Figure 4.10: Example `pytest` integration for a ROS 2 topic test.*
+
+### Conclusion: Your Robot's First Steps in Code
+
+You have successfully built your first ROS 2 package! You've learned how to structure your code, declare dependencies, and make your Python scripts executable. More importantly, you've implemented all the core communication patterns—topics, services, and actions—within this package. You now have a solid foundation for building complex, modular robot software.
+
+This package, `humanoid_core_pkg`, serves as the very heart of our robot's nervous system. In the next chapter, we will build upon this by defining the robot's physical form using URDF and Xacro.
+
+---
+
+## References
+
+[^1]: ROS 2 Documentation. "About ROS 2 — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Concepts/About-ROS-2-introduction.html](https://docs.ros.org/en/humble/Concepts/About-ROS-2-introduction.html).
+[^2]: ROS 2 Documentation. "About DDS and ROS Middleware Abstraction — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Concepts/About-DDS-and-ROS-Middleware-Abstraction.html](https://docs.ros.org/en/humble/Concepts/About-DDS-and-ROS-Middleware-Abstraction.html).
+[^3]: ROS 2 Documentation. "About Nodes — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Concepts/About-Nodes.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Nodes/Understanding-ROS2-Nodes.html).
+[^4]: ROS 2 Documentation. "Understanding ROS 2 Topics — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Topics/Understanding-ROS2-Topics.html).
+[^5]: ROS 2 Documentation. "Understanding ROS 2 Services — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html).
+[^6]: ROS 2 Documentation. "Understanding ROS 2 Actions — ROS 2 Documentation: Humble documentation." *ROS.org*, [https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html).

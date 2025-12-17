@@ -1,0 +1,32 @@
+---
+title: "Module 1 – The Robotic Nervous System (ROS 2)"
+sidebar_label: Overview
+sidebar_position: 0
+---
+
+import {Highlight} from '@site/src/components/Highlight';
+
+**Weeks 3–5** • **9,000–11,000 words** • **Core skill: ROS 2 mastery**
+
+### Why this module exists
+Every humanoid robot—whether simulated or real—needs a rock-solid nervous system. ROS 2 is the industry-standard middleware that connects perception, planning, and actuation. By the end of this module you will be able to build, from scratch, a complete ROS 2 workspace that fully controls a 22+ DoF humanoid robot.
+
+### Learning Outcomes
+- Master ROS 2 core concepts (nodes, topics, services, actions, parameters)
+- Write production-grade Python (rclpy) packages that run on both x86 workstations and ARM64 Jetson
+- Model complex humanoids using URDF + Xacro (including transmission, gazebo plugins, and mimic joints)
+- Launch multi-node systems with perfect launch files and parameter tuning
+
+### Chapters in this module
+1. **Chapter 03** – ROS 2 Architecture Deep Dive  
+2. **Chapter 04** – Building Your First Humanoid ROS 2 Package (Python + rclpy)  
+3. **Chapter 05** – URDF & Xacro Mastery – From Stick Figure to Full Humanoid
+
+### Final Deliverable by Week 5
+A fully functional ROS 2 workspace containing:
+- A complete 22-DoF humanoid URDF with sensors and actuators
+- Publisher/subscriber nodes for joint states and commands
+- Action server for high-level tasks (e.g., “wave hand”)
+- One-click `colcon build && ros2 launch` that brings the robot to life
+
+<Highlight>After this module, Gemini 2.5 Flash will be able to send commands directly into your robot’s nervous system.</Highlight>
