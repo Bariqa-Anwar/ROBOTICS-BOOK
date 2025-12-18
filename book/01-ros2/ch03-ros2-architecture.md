@@ -3,7 +3,6 @@ title: "03. ROS 2 Architecture"
 sidebar_label: "03. ROS 2 Architecture"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
 ## Chapter 03: ROS 2 Architecture: Nodes, Topics, Services, Actions, & Beyond
 

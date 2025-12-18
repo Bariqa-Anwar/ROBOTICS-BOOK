@@ -1,11 +1,11 @@
 ---
-title: "14. The LLM-to-ROS 2 Translation Layer"
-sidebar_label: "14. LLM-to-ROS 2 Translation"
+title : "14. The LLM-to-ROS 2 Translation Layer"
+sidebar_label : "14. LLM-to-ROS 2 Translation"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
-## Chapter 14: The LLM-to-ROS 2 Translation Layer
+
+## Chapter 14 : The LLM-to-ROS 2 Translation Layer
 
 ### From Command to Choreography
 
@@ -18,13 +18,11 @@ We will create a sophisticated **LLM-to-ROS 2 Translation Layer**. This system w
 <Mermaid chart={`
 graph TD;
     A["User Command<br/><i>'Clean the room'</i>"] --> B{Translation Layer};
-    subgraph B
-        B1[LLM Function Calling]
-        B2[ROS 2 Action Dispatcher]
-        B3[Error Handling & Re-planning]
+    subgraph "B
+        B1["LLM Function Calling"] B2["ROS 2 Action Dispatcher"] B3["Error Handling & Re-planning"]
     end
     B --> C["Action Sequence<br/><i>1. navigate_to('table')<br/>2. pick_up('cup')<br/>3. ...</i>"];
-    style B fill:#00ff9d
+    style B fill :#00ff9d
 `} />
 
 ### The Function Calling Paradigm
@@ -39,63 +37,63 @@ sequenceDiagram
     participant Translator
     participant LLM
     participant Robot
-    User->>Translator: "Tidy up the desk"
-    Translator->>LLM: Prompt + Tool Schemas (navigate, pickup, place)
-    LLM-->>Translator: Plan: [pickup("cup"), place("cup", "bin")]
-    Translator->>Robot: Execute: pickup("cup")
-    Robot-->>Translator: Success
-    Translator->>Robot: Execute: place("cup", "bin")
-    Robot-->>Translator: Success
-    Translator-->>User: Task Complete
+    User->>Translator : "Tidy up the desk"
+    Translator->>LLM : Prompt + Tool Schemas (navigate, pickup, place)
+    LLM-->>Translator : Plan : [pickup("cup"), place("cup", bin)]
+    Translator->>Robot : Execute : pickup("cup")
+    Robot-->>Translator : Success
+    Translator->>Robot : Execute : place("cup", "bin")
+    Robot-->>Translator : Success
+    Translator-->>User : Task Complete
 `} />
 
-### Step 1: Defining the Robot's "API" as Python Functions
+### Step 1 : Defining the Robot's "API" as Python Functions
 
 First, we create simple Python function stubs inside our new ROS 2 node. Each function represents a high-level skill the robot possesses. The function body itself doesn't matter; its signature, type hints, and docstring are what we care about.
 
-**`llm_action_translator_node.py` (Initial Tools):**
+**`llm_action_translator_node.py` (Initial Tools) :**
 ```python
 from typing import Literal
 
 # Define known locations and objects for type hinting
-KnownLocations = Literal["kitchen_table", "coffee_table", "charging_station", "trash_bin"]
-KnownObjects = Literal["red_cup", "blue_block"]
+KnownLocations = Literal[kitchen_table", "coffee_table", "charging_station", trash_bin]
+KnownObjects = Literal[red_cup", blue_block]
 
-def navigate_to(location: KnownLocations):
-    """
+def navigate_to(location : KnownLocations) :
+    "
     Moves the robot base to a specified, named location in the environment.
 
-    Args:
-        location: The destination for the robot's base.
-    """
+    Args :
+        location : The destination for the robot's base.
+    "
     pass
 
-def pick_up_object(object_name: KnownObjects):
-    """
+def pick_up_object(object_name : KnownObjects) :
+    "
     Executes a grasp sequence to pick up a specified object. Assumes the robot
     is already near the object.
 
-    Args:
-        object_name: The name of the object to pick up.
-    """
+    Args :
+        object_name : The name of the object to pick up.
+    "
     pass
 
-def place_object(location: KnownLocations):
-    """
+def place_object(location : KnownLocations) :
+    "
     Places the currently held object at the specified location. Assumes the
     robot is already at the destination.
 
-    Args:
-        location: The location to place the object.
-    """
+    Args :
+        location : The location to place the object.
+    "
     pass
 ```
 
-### Step 2: Generating Schemas for the LLM
+### Step 2 : Generating Schemas for the LLM
 
 Now, we need to convert these Python functions into a JSON Schema format that the LLM can understand. This is where the `function_schema` utility from the provided code snippets becomes invaluable. It uses Python's `inspect` and `pydantic` libraries to automatically generate a detailed schema from the function's signature and docstring.
 
-**Using `function_schema`:**
+**Using `function_schema` :**
 ```python
 # In our translator node's __init__ method...
 
@@ -109,31 +107,31 @@ self.tool_schemas = [function_schema(tool) for tool in self.robot_tools]
 self.gemini_tools = [convert_schema_to_gemini_tool(s) for s in self.tool_schemas]
 ```
 
-The generated schema for `pick_up_object` would look something like this:
+The generated schema for `pick_up_object` would look something like this :
 ```json
 {
-  "name": "pick_up_object",
-  "description": "Executes a grasp sequence to pick up a specified object...",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "object_name": {
-        "type": "string",
-        "description": "The name of the object to pick up.",
-        "enum": ["red_cup", "blue_block"]
+  "name" : "pick_up_object",
+  "description" : "Executes a grasp sequence to pick up a specified object...",
+  "parameters" : {
+    "type" : "object",
+    "properties" : {
+      "object_name" : {
+        "type" : "string",
+        "description" : "The name of the object to pick up.",
+        "enum" : [red_cup", blue_block]
       }
     },
-    "required": ["object_name"]
+    "required" : [object_name]
   }
 }
 ```
 This tells the LLM everything it needs to know to call the function correctly.
 
-### Step 3: The Translator Node - Prompting and Parsing
+### Step 3 : The Translator Node - Prompting and Parsing
 
 The core of our system is a ROS 2 Action Server that accepts a natural language command. When it receives a command, it constructs a prompt and calls the Gemini API.
 
-**`llm_action_translator_node.py` (Core Logic):**
+**`llm_action_translator_node.py` (Core Logic) :**
 ```python
 import rclpy
 from rclpy.node import Node
@@ -141,8 +139,8 @@ from rclpy.action import ActionServer
 # ... other imports
 import google.generativeai as genai
 
-class LLMActionTranslatorNode(Node):
-    def __init__(self):
+class LLMActionTranslatorNode(Node) :
+    def __init__(self) :
         super().__init__('llm_action_translator_node')
         # ... (tool schema generation from Step 2) ...
 
@@ -162,9 +160,9 @@ class LLMActionTranslatorNode(Node):
         self._pickup_client = ActionClient(self, PickUpObject, '/pickup_object')
         # ... etc.
 
-    def execute_callback(self, goal_handle):
+    def execute_callback(self, goal_handle) :
         user_command = goal_handle.request.command
-        self.get_logger().info(f"Received task: '{user_command}'")
+        self.get_logger().info(f"Received task : '{user_command}'")
         
         # Initial call to the LLM to get the first plan
         response = self.model.generate_content(user_command)
@@ -176,36 +174,36 @@ class LLMActionTranslatorNode(Node):
         # ... (see Step 4)
 ```
 
-### Step 4: The Execution Engine and Reasoning Loop
+### Step 4 : The Execution Engine and Reasoning Loop
 
 This is the most critical part. We don't just execute the plan; we create a loop that can handle failures and ask the LLM to re-plan.
 
 <Mermaid chart={`
 graph TD
-    A[Get LLM Plan] --> B{For each step in Plan};
-    B -- Execute Step --> C[Call ROS Action Server];
+    A["Get LLM Plan"] --> B{For each step in Plan};
+    B -- Execute Step --> C["Call ROS Action Server"];
     C --> D{Success?};
     D -- Yes --> B;
-    D -- No --> E[Report Failure to LLM];
-    E --> F[Get New Plan from LLM];
+    D -- No --> E["Report Failure to LLM"];
+    E --> F["Get New Plan from LLM"];
     F --> A;
-    B -- All Steps Done --> G[Task Complete];
-    style G fill:#ccffcc
-    style E fill:#ffcccc
+    B -- All Steps Done --> G["Task Complete"];
+    style G fill :#ccffcc
+    style E fill :#ffcccc
 `} />
 
-**`llm_action_translator_node.py` (Execution Loop):**
+**`llm_action_translator_node.py` (Execution Loop) :**
 ```python
 # ... inside the execute_callback method
 
 conversation_history = [
-    {'role': 'user', 'parts': [{'text': user_command}]},
+    {'role' : 'user', 'parts' : [{'text' : user_command}]},
     response.candidates[0].content 
 ]
 
-while True:
+while True :
     # Check if the last response contained function calls to execute
-    if not conversation_history[-1].parts or not conversation_history[-1].parts[0].function_call:
+    if not conversation_history[-1].parts or not conversation_history[-1].parts[0].function_call :
         self.get_logger().info("LLM finished planning.")
         break # Exit loop if LLM has no more actions
 
@@ -213,36 +211,36 @@ while True:
     proposed_plan = conversation_history[-1].parts
     tool_results = []
 
-    for tool_call in proposed_plan:
+    for tool_call in proposed_plan :
         func_name = tool_call.function_call.name
         args = tool_call.function_call.args
-        self.get_logger().info(f"Executing: {func_name}({args})")
+        self.get_logger().info(f"Executing : {func_name}({args})")
         
         # --- Dispatcher Logic ---
         success = False
-        error_message = ""
-        if func_name == "navigate_to":
+        error_message = "
+        if func_name == "navigate_to" :
             success, error_message = self.execute_navigation(args['location'])
-        elif func_name == "pick_up_object":
+        elif func_name == "pick_up_object" :
             success, error_message = self.execute_pickup(args['object_name'])
         # ... etc.
 
         # Append the result of the tool execution for the next LLM call
         tool_results.append({
-            "function_call": tool_call.function_call,
-            "function_response": {
-                "name": func_name,
-                "response": {"success": success, "error": error_message}
+            "function_call" : tool_call.function_call,
+            "function_response" : {
+                "name" : func_name,
+                "response" : {"success" : success, "error" : error_message}
             }
         })
         
         # If any step fails, we stop executing this plan and re-plan
-        if not success:
+        if not success :
             break
 
     # --- Re-planning Logic ---
     # Send the results of our execution back to the LLM
-    conversation_history.append({'role': 'user', 'parts': tool_results})
+    conversation_history.append({'role' : 'user', 'parts' : tool_results})
     response = self.model.generate_content(conversation_history)
     conversation_history.append(response.candidates[0].content)
 
@@ -253,7 +251,7 @@ result.status = "Task completed successfully."
 return result
 
 # --- Helper execution methods ---
-def execute_navigation(self, location):
+def execute_navigation(self, location) :
     # 1. Look up coordinates for 'location'
     # 2. Create NavigateToPose.Goal message
     # 3. Call self._nav_client.send_goal_and_wait_for_result()
@@ -261,20 +259,20 @@ def execute_navigation(self, location):
     pass
 ```
 
-### The Demonstration: "Clean the room"
+### The Demonstration : "Clean the room"
 
 With the full system in place, we can finally tackle a complex, ambiguous command.
 
-1.  **Set up the Scene:** In Isaac Sim, load the apartment world from Chapter 6. Place a red cup model at a known location (e.g., on a table). Place the humanoid robot at a starting position.
-2.  **Define Action Servers:** Ensure the robot's control system is running, with Action Servers for `/pickup_object` and `/navigate_to_pose` available (as developed in previous chapters). You will need to fill in the `object_locations` dictionary in `action_client_node.py` with the correct coordinates of the red cup in your scene.
-3.  **Launch the VLA Pipeline:** Create a launch file, `voice_to_action.launch.py`, that starts all four of our new nodes.
-4.  **Speak the Command:** Run the launch file. The `mic_publisher_node` will print "Listening...". Speak clearly into your microphone: **"Bring me the red cup."**
-5.  **Observe the Chain Reaction:**
+1.  **Set up the Scene :** In Isaac Sim, load the apartment world from Chapter 6. Place a red cup model at a known location (e.g., on a table). Place the humanoid robot at a starting position.
+2.  **Define Action Servers :** Ensure the robot's control system is running, with Action Servers for `/pickup_object` and `/navigate_to_pose` available (as developed in previous chapters). You will need to fill in the `object_locations` dictionary in `action_client_node.py` with the correct coordinates of the red cup in your scene.
+3.  **Launch the VLA Pipeline :** Create a launch file, `voice_to_action.launch.py`, that starts all four of our new nodes.
+4.  **Speak the Command :** Run the launch file. The `mic_publisher_node` will print "Listening...". Speak clearly into your microphone : **"Bring me the red cup."**
+5.  **Observe the Chain Reaction :**
     *   The mic node will detect silence and publish the audio.
-    *   The Whisper node will log: `Whisper transcribed: "Bring me the red cup."`
-    *   The NLU node will log: `Gemini responded: {"action": "PICK_UP", "target": "red_cup"}`
-    *   The action client node will log: `Sent PICK_UP goal to action server.`
-6.  **Watch the Robot Move:** In the Isaac Sim window, you will see the humanoid robot begin to execute its pre-programmed pickup behavior, moving its arm towards the red cup.
+    *   The Whisper node will log : `Whisper transcribed : "Bring me the red cup."`
+    *   The NLU node will log : `Gemini responded : {"action" : "PICK_UP", "target" : "red_cup"}`
+    *   The action client node will log : `Sent PICK_UP goal to action server.`
+6.  **Watch the Robot Move :** In the Isaac Sim window, you will see the humanoid robot begin to execute its pre-programmed pickup behavior, moving its arm towards the red cup.
 
 ### Conclusion
 

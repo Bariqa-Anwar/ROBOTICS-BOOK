@@ -1,15 +1,15 @@
 ---
-title: "05. URDF & Xacro Mastery"
-sidebar_label: "05. URDF & Xacro Mastery"
+title : "05. URDF & Xacro Mastery"
+sidebar_label : "05. URDF & Xacro Mastery"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
-## Chapter 05: URDF & Xacro Mastery – From Stick Figure to Full Humanoid
 
-### Introduction: The Digital Skeleton
+## Chapter 05 : URDF & Xacro Mastery – From Stick Figure to Full Humanoid
 
-Every robot, from a simple arm to a complex humanoid, needs a digital blueprint. In the ROS ecosystem, this blueprint is the **Unified Robot Description Format (URDF)**. URDF is an XML format used to describe all the physical properties of a robot: its links (the rigid parts), its joints (which connect the links), its visual appearance, its collision properties, and its inertial characteristics.
+### Introduction : The Digital Skeleton
+
+Every robot, from a simple arm to a complex humanoid, needs a digital blueprint. In the ROS ecosystem, this blueprint is the **Unified Robot Description Format (URDF)**. URDF is an XML format used to describe all the physical properties of a robot : its links (the rigid parts), its joints (which connect the links), its visual appearance, its collision properties, and its inertial characteristics.
 
 Mastering URDF is non-negotiable for any roboticist. It's the foundation upon which simulation, motion planning, and control are built. Tools like RViz (the ROS 3D visualizer) and Gazebo (the ROS simulator) parse URDF files to render and simulate your robot.
 
@@ -19,53 +19,53 @@ In this chapter, we will go from zero to hero. We'll start by building a simple 
 
 <Mermaid chart={`
 graph TD;
-    A[URDF Foundation] --> B(Building a Simple Robot);
+    A["URDF Foundation"] --> B(Building a Simple Robot);
     B --> C{Repetitive & Complex?};
-    C -- Yes --> D[Introduce Xacro];
+    C -- Yes --> D["Introduce Xacro"];
     D --> E(Create Reusable Macros);
     E --> F(Define Constants & Properties);
-    F --> G[Assemble a 22-DoF Humanoid];
+    F --> G["Assemble a 22-DoF Humanoid"];
     G --> H(Add Gazebo Plugins & Transmissions);
-    H --> I[Ready for RViz & Gazebo!];
+    H --> I["Ready for RViz & Gazebo!"];
 
-    style A fill:#00ff9d,stroke:#333,stroke-width:2px
-    style D fill:#00ff9d,stroke:#333,stroke-width:2px
-    style G fill:#00ff9d,stroke:#333,stroke-width:4px
+    style A fill :#00ff9d,stroke :#333,stroke-width :2px
+    style D fill :#00ff9d,stroke :#333,stroke-width :2px
+    style G fill :#00ff9d,stroke :#333,stroke-width :4px
 `} />
 
-### The Core of URDF: Links and Joints
+### The Core of URDF : Links and Joints
 
 A robot model is fundamentally a tree of links connected by joints.
 
-*   **`<link>`**: Describes a rigid part of the robot. It has properties for its `visual` appearance, `collision` geometry, and `inertial` properties (mass, moment of inertia).
-*   **`<joint>`**: Connects two links together. It defines the relationship between a `parent` link and a `child` link, the joint `type`, its `origin` (position and orientation), and its `axis` of motion.
+*   **`<link>`** : Describes a rigid part of the robot. It has properties for its `visual` appearance, `collision` geometry, and `inertial` properties (mass, moment of inertia).
+*   **`<joint>`** : Connects two links together. It defines the relationship between a `parent` link and a `child` link, the joint `type`, its `origin` (position and orientation), and its `axis` of motion.
 
 There must be one **root link** for the entire robot tree. All other links are connected to it through a chain of joints.
 
 <Mermaid chart={`
 graph TD;
-    subgraph Robot Tree
+    subgraph "Robot Tree"
         Root_Link --- Joint1 --- Child_Link_1;
         Child_Link_1 --- Joint2 --- Child_Link_2;
         Child_Link_1 --- Joint3 --- Child_Link_3;
     end
-    style Root_Link fill:#00ff9d,stroke:#333,stroke-width:4px
+    style Root_Link fill :#00ff9d,stroke :#333,stroke-width :4px
 `} />
 
 #### Joint Types
-URDF supports several joint types:
-*   `revolute`: A rotational joint with defined limits.
-*   `continuous`: A rotational joint without limits (like a wheel).
-*   `prismatic`: A sliding joint with defined limits.
-*   `fixed`: A rigid connection between two links with no motion.
-*   `floating`: Allows 6-DoF motion (rarely used, typically for connecting to the world).
-*   `planar`: Allows motion in a 2D plane.
+URDF supports several joint types :
+*   `revolute` : A rotational joint with defined limits.
+*   `continuous` : A rotational joint without limits (like a wheel).
+*   `prismatic` : A sliding joint with defined limits.
+*   `fixed` : A rigid connection between two links with no motion.
+*   `floating` : Allows 6-DoF motion (rarely used, typically for connecting to the world).
+*   `planar` : Allows motion in a 2D plane.
 
-### Building a Stick Figure: Our First URDF
+### Building a Stick Figure : Our First URDF
 
 Let's start by creating a simple two-link arm. We'll have a `base_link` (the root), a `shoulder_joint`, an `upper_arm_link`, an `elbow_joint`, and a `lower_arm_link`.
 
-**`stick_figure.urdf`:**
+**`stick_figure.urdf` :**
 ```xml
 <?xml version="1.0"?>
 <robot name="stick_figure">
@@ -129,35 +129,35 @@ Let's start by creating a simple two-link arm. We'll have a `base_link` (the roo
 ```
 To visualize this, you would use a launch file that loads this URDF into `robot_state_publisher` and starts RViz.
 
-### The Problem with URDF: Complexity and Repetition
+### The Problem with URDF : Complexity and Repetition
 
 Our simple arm is already over 50 lines. Now imagine our 22-DoF humanoid. We'd have to define 23 links (1 base + 22 moving) and 22 joints. The left and right arms/legs are nearly identical, differing only by a sign flip in their Y-coordinates. This is where manual URDF becomes a nightmare.
 
 ### Xacro to the Rescue
 
-Xacro allows us to:
-1.  **Define Properties:** Create constants for values like link lengths, radii, colors, etc.
-2.  **Create Macros:** Define reusable templates for links and joints.
-3.  **Perform Math:** Do simple arithmetic inside the XML.
-4.  **Use Conditionals:** Include or exclude blocks with `xacro:if` and `xacro:unless`.
+Xacro allows us to :
+1.  **Define Properties :** Create constants for values like link lengths, radii, colors, etc.
+2.  **Create Macros :** Define reusable templates for links and joints.
+3.  **Perform Math :** Do simple arithmetic inside the XML.
+4.  **Use Conditionals :** Include or exclude blocks with `xacro :if` and `xacro :unless`.
 
 <Mermaid chart={`
 graph TD;
-    subgraph Xacro Workflow
-        A[Constants.xacro<br/><i>(pi, colors)</i>] --> C;
-        B[Macros.xacro<br/><i>(e.g., leg_macro)</i>] --> C;
-        C{Main Robot.xacro} --> D[URDF Generation];
+    subgraph "Xacro Workflow"
+        A["Constants.xacro<br/><i>(pi, colors)</i>"] --> C;
+        B["Macros.xacro<br/><i>(e.g., leg_macro)</i>"] --> C;
+        C{Main Robot.xacro} --> D["URDF Generation"];
         C -- uses --> A;
         C -- uses --> B;
     end
-    style C fill:#00ff9d,stroke:#333,stroke-width:4px
+    style C fill :#00ff9d,stroke :#333,stroke-width :4px
 `} />
 
 ### Building our 22-DoF Humanoid with Xacro
 
 We will now build our humanoid, `h1`, by creating a set of `.xacro` files.
 
-**File Structure:**
+**File Structure :**
 ```
 h1_description/
 ├── urdf/
@@ -171,19 +171,19 @@ h1_description/
     └── view_robot.launch.py
 ```
 
-#### 1. `common.xacro`: Properties and Materials
+#### 1. `common.xacro` : Properties and Materials
 
 We define all our constants and material colors here.
 
 ```xml
 <!-- docs/modules/01-ros2/code/h1_description/urdf/common.xacro -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot xmlns :xacro="http ://www.ros.org/wiki/xacro">
 
   <!-- Constants -->
-  <xacro:property name="PI" value="3.1415926535897931"/>
-  <xacro:property name="torso_height" value="0.6"/>
-  <xacro:property name="torso_radius" value="0.2"/>
-  <xacro:property name="head_radius" value="0.15"/>
+  <xacro :property name="PI" value="3.1415926535897931"/>
+  <xacro :property name="torso_height" value="0.6"/>
+  <xacro :property name="torso_radius" value="0.2"/>
+  <xacro :property name="head_radius" value="0.15"/>
 
   <!-- Materials -->
   <material name="black">
@@ -206,11 +206,11 @@ We define all our constants and material colors here.
 
 These define the central body and head.
 
-**`torso.xacro`:**
+**`torso.xacro` :**
 ```xml
 <!-- docs/modules/01-ros2/code/h1_description/urdf/torso.xacro -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="torso">
+<robot xmlns :xacro="http ://www.ros.org/wiki/xacro">
+  <xacro :macro name="torso">
     <link name="base_link"/>
     <joint name="floating_joint" type="floating">
         <parent link="base_link"/>
@@ -234,15 +234,15 @@ These define the central body and head.
         <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="0.5"/>
       </inertial>
     </link>
-  </xacro:macro>
+  </xacro :macro>
 </robot>
 ```
 
-**`head.xacro`:**
+**`head.xacro` :**
 ```xml
 <!-- docs/modules/01-ros2/code/h1_description/urdf/head.xacro -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="head">
+<robot xmlns :xacro="http ://www.ros.org/wiki/xacro">
+  <xacro :macro name="head">
     <link name="head_pan_link">
       <visual>
         <geometry><sphere radius="${head_radius}"/></geometry>
@@ -267,18 +267,18 @@ These define the central body and head.
         <axis xyz="0 1 0"/>
         <limit lower="-0.785" upper="0.785" effort="5" velocity="0.5"/>
     </joint>
-  </xacro:macro>
+  </xacro :macro>
 </robot>
 ```
 
-#### 3. `arm.xacro`: The Power of Macros
+#### 3. `arm.xacro` : The Power of Macros
 
 Here we define a macro that can be instantiated for both the left and right arms, using a `prefix` and `reflect` parameter to handle naming and positioning.
 
 ```xml
 <!-- docs/modules/01-ros2/code/h1_description/urdf/arm.xacro -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="arm" params="prefix reflect">
+<robot xmlns :xacro="http ://www.ros.org/wiki/xacro">
+  <xacro :macro name="arm" params="prefix reflect">
     <!-- Shoulder Roll -->
     <link name="${prefix}_shoulder_roll_link">
       <visual><geometry><cylinder length="0.2" radius="0.06"/></geometry><material name="grey"/></visual>
@@ -308,42 +308,42 @@ Here we define a macro that can be instantiated for both the left and right arms
         <axis xyz="0 1 0"/>
         <limit lower="-0.785" upper="0.785" effort="5" velocity="1.0"/>
     </joint>
-  </xacro:macro>
+  </xacro :macro>
 </robot>
 ```
-*(Note: A full arm definition would be much longer, this is a simplified view)*
+*(Note : A full arm definition would be much longer, this is a simplified view)*
 
-#### 4. `h1.urdf.xacro`: The Top-Level File
+#### 4. `h1.urdf.xacro` : The Top-Level File
 
 This file brings everything together. It includes the other files and calls the macros.
 
 ```xml
 <!-- docs/modules/01-ros2/code/h1_description/urdf/h1.urdf.xacro -->
 <?xml version="1.0"?>
-<robot name="h1" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="h1" xmlns :xacro="http ://www.ros.org/wiki/xacro">
 
   <!-- Includes -->
-  <xacro:include filename="$(find h1_description)/urdf/common.xacro"/>
-  <xacro:include filename="$(find h1_description)/urdf/torso.xacro"/>
-  <xacro:include filename="$(find h1_description)/urdf/head.xacro"/>
-  <xacro:include filename="$(find h1_description)/urdf/arm.xacro"/>
-  <!-- <xacro:include filename="$(find h1_description)/urdf/leg.xacro"/> -->
+  <xacro :include filename="$(find h1_description)/urdf/common.xacro"/>
+  <xacro :include filename="$(find h1_description)/urdf/torso.xacro"/>
+  <xacro :include filename="$(find h1_description)/urdf/head.xacro"/>
+  <xacro :include filename="$(find h1_description)/urdf/arm.xacro"/>
+  <!-- <xacro :include filename="$(find h1_description)/urdf/leg.xacro"/> -->
 
   <!-- Instantiate Macros -->
-  <xacro:torso/>
-  <xacro:head/>
-  <xacro:arm prefix="left" reflect="1"/>
-  <xacro:arm prefix="right" reflect="-1"/>
-  <!-- <xacro:leg prefix="left" reflect="1"/> -->
-  <!-- <xacro:leg prefix="right" reflect="-1"/> -->
+  <xacro :torso/>
+  <xacro :head/>
+  <xacro :arm prefix="left" reflect="1"/>
+  <xacro :arm prefix="right" reflect="-1"/>
+  <!-- <xacro :leg prefix="left" reflect="1"/> -->
+  <!-- <xacro :leg prefix="right" reflect="-1"/> -->
 
 </robot>
 ```
 
-To generate the final URDF, you would run:
+To generate the final URDF, you would run :
 `ros2 run xacro xacro h1.urdf.xacro > h1.urdf`
 
-### Adding Simulation-Specific Details: Gazebo Plugins
+### Adding Simulation-Specific Details : Gazebo Plugins
 
 URDF is simulation-agnostic. To make our robot controllable in Gazebo, we need to add Gazebo-specific tags. These are wrapped in `<gazebo>` blocks so other tools (like RViz) ignore them.
 
@@ -352,12 +352,12 @@ Transmissions link a ROS `joint` to a Gazebo actuator. This is crucial for `ros2
 
 <Mermaid chart={`
 graph TD;
-    A[Joint in URDF] -- Transmission --> B[Actuator in Gazebo];
+    A["Joint in URDF"] -- Transmission --> B["Actuator in Gazebo"];
     C[ros2_control] --> B;
-    style C fill:#00ff9d
+    style C fill :#00ff9d
 `} />
 
-We add this inside our joint definitions (e.g., in the `arm.xacro` macro):
+We add this inside our joint definitions (e.g., in the `arm.xacro` macro) :
 ```xml
 <transmission name="${prefix}_shoulder_roll_trans">
   <type>transmission_interface/SimpleTransmission</type>
@@ -384,7 +384,7 @@ We can also add plugins for sensors (like an IMU) or controllers. We'll add the 
 </gazebo>
 ```
 
-### Advanced Technique: Mimic Joints
+### Advanced Technique : Mimic Joints
 
 Mimic joints are used when one joint's motion is directly coupled to another. For example, in a gripper where two fingers move together.
 
@@ -402,13 +402,13 @@ When `left_finger_joint` moves, `right_finger_joint` will automatically move wit
 
 ### Launching and Visualizing
 
-Finally, a launch file is used to bring it all together. This file will:
+Finally, a launch file is used to bring it all together. This file will :
 1.  Find the `h1.urdf` file.
 2.  Start a `robot_state_publisher` node, which reads the URDF and publishes the `tf2` transforms for all the links.
 3.  Start a `joint_state_publisher_gui` to allow you to move the joints with sliders.
 4.  Start RViz with a pre-configured view.
 
-**`view_robot.launch.py`:**
+**`view_robot.launch.py` :**
 ```python
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -416,11 +416,11 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 import xacro
 
-def generate_launch_description():
+def generate_launch_description() :
     pkg_path = get_package_share_directory('h1_description')
     xacro_file = os.path.join(pkg_path, 'urdf', 'h1.urdf.xacro')
     robot_description_config = xacro.process_file(xacro_file)
-    robot_description = {'robot_description': robot_description_config.toxml()}
+    robot_description = {'robot_description' : robot_description_config.toxml()}
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',

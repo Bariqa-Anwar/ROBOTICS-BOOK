@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position : 1
 ---
 
 # ROS 2 Nodes and Topics
@@ -23,7 +23,7 @@ cd ~/ros2_ws
 
 ### 1.2 Initialize the workspace
 
-You can initialize an empty workspace with the following command:
+You can initialize an empty workspace with the following command :
 
 ```bash
 # From ~/ros2_ws
@@ -41,7 +41,7 @@ Before you can use any packages from your workspace, you need to source its setu
 source install/setup.bash
 ```
 
-It's recommended to add this line to your `~/.bashrc` file if you want it to be sourced automatically every time you open a new terminal:
+It's recommended to add this line to your `~/.bashrc` file if you want it to be sourced automatically every time you open a new terminal :
 
 ```bash
 echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
@@ -62,10 +62,10 @@ ros2 pkg create --build-type ament_python my_robot_pkg
 
 This command creates a new directory `my_robot_pkg` with a basic structure, including a `setup.py` and `package.xml` file, which are crucial for defining and building your Python package.
 
-## 3. ROS 2 Nodes: Publisher and Subscriber
-<!-- DIAGRAM: ROS2_Computation_Graph -->
+## 3. ROS 2 Nodes : Publisher and Subscriber
+<!-- DIAGRAM : ROS2_Computation_Graph -->
 
-We will create two simple Python nodes: a publisher that sends "Hello ROS" messages, and a subscriber that receives and prints them.
+We will create two simple Python nodes : a publisher that sends "Hello ROS" messages, and a subscriber that receives and prints them.
 
 ### 3.1 Publisher Node
 
@@ -77,30 +77,30 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-class SimplePublisher(Node):
+class SimplePublisher(Node) :
 
-    def __init__(self):
+    def __init__(self) :
         super().__init__('simple_publisher')
         self.publisher_ = self.create_publisher(String, 'my_topic', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
-    def timer_callback(self):
+    def timer_callback(self) :
         msg = String()
-        msg.data = 'Hello ROS: %d' % self.i
+        msg.data = 'Hello ROS : %d' % self.i
         self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.get_logger().info('Publishing : "%s"' % msg.data)
         self.i += 1
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     simple_publisher = SimplePublisher()
     rclpy.spin(simple_publisher)
     simple_publisher.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
 ```
 
@@ -114,9 +114,9 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-class SimpleSubscriber(Node):
+class SimpleSubscriber(Node) :
 
-    def __init__(self):
+    def __init__(self) :
         super().__init__('simple_subscriber')
         self.subscription = self.create_subscription(
             String,
@@ -125,17 +125,17 @@ class SimpleSubscriber(Node):
             10)
         self.subscription  # prevent unused variable warning
 
-    def listener_callback(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg.data)
+    def listener_callback(self, msg) :
+        self.get_logger().info('I heard : "%s"' % msg.data)
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     simple_subscriber = SimpleSubscriber()
     rclpy.spin(simple_subscriber)
     simple_subscriber.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
 ```
 
@@ -145,7 +145,7 @@ After creating your Python files and updating `setup.py`, you need to build your
 
 ### 4.1 Build the Package
 
-Navigate to your workspace root (`~/ros2_ws`) and build your package:
+Navigate to your workspace root (`~/ros2_ws`) and build your package :
 
 ```bash
 # From ~/ros2_ws
@@ -154,7 +154,7 @@ colcon build --packages-select my_robot_pkg
 
 ### 4.2 Source the Workspace (again)
 
-After building, you need to re-source your workspace to make the new executables available:
+After building, you need to re-source your workspace to make the new executables available :
 
 ```bash
 # From ~/ros2_ws
@@ -163,13 +163,13 @@ source install/setup.bash
 
 ### 4.3 Run the Nodes
 
-Open two separate terminals. In the first terminal, run the publisher:
+Open two separate terminals. In the first terminal, run the publisher :
 
 ```bash
 ros2 run my_robot_pkg simple_publisher
 ```
 
-In the second terminal, run the subscriber:
+In the second terminal, run the subscriber :
 
 ```bash
 ros2 run my_robot_pkg simple_subscriber

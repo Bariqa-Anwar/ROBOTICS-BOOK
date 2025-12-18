@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position : 2
 ---
 
 # Python Environment Setup
@@ -8,8 +8,8 @@ This section guides you through setting up a dedicated Python environment (using
 
 ## Prerequisites
 
-*   **Python 3.10+**: Ensure Python 3.10 or a newer version is installed on your system.
-*   **Internet Connection**: Required for downloading packages.
+*   **Python 3.10+** : Ensure Python 3.10 or a newer version is installed on your system.
+*   **Internet Connection** : Required for downloading packages.
 
 ## 1. Verify Python Installation
 
@@ -19,7 +19,7 @@ First, check if Python 3 is installed and its version.
 python3 --version
 ```
 
-If Python 3.10+ is not installed, you might need to install it:
+If Python 3.10+ is not installed, you might need to install it :
 
 ```bash
 sudo apt update
@@ -48,7 +48,7 @@ You must activate the virtual environment in each terminal session where you int
 source venv/bin/activate
 ```
 
-Once activated, your terminal prompt will typically change to indicate that you are operating within the virtual environment (e.g., `(venv) user@hostname:~`).
+Once activated, your terminal prompt will typically change to indicate that you are operating within the virtual environment (e.g., `(venv) user@hostname :~`).
 
 ## 4. Install Project-Specific Python Packages
 
@@ -71,25 +71,25 @@ This will return your shell to its global Python environment.
 
 ## Verification
 
-To verify your Python environment setup:
+To verify your Python environment setup :
 
-1.  **Activate your virtual environment**:
+1.  **Activate your virtual environment** :
     ```bash
     source venv/bin/activate
     ```
-2.  **Check Python version**:
+2.  **Check Python version** :
     ```bash
     python --version
     ```
     Ensure it reports `Python 3.10.x` or newer.
 
-3.  **List installed packages**:
+3.  **List installed packages** :
     ```bash
     pip list
     ```
     This should show only `pip`, `setuptools`, and `wheel` initially, confirming a clean environment.
 
-4.  **Deactivate the environment**:
+4.  **Deactivate the environment** :
     ```bash
     deactivate
     ```

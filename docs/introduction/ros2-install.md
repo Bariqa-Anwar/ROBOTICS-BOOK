@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position : 1
 ---
 
 # ROS 2 Installation Guide
@@ -8,9 +8,9 @@ This guide provides step-by-step instructions for installing ROS 2 Humble or Iro
 
 ## Prerequisites
 
-*   **Operating System**: Ubuntu 22.04 LTS (Jammy Jellyfish) for ROS 2 Humble, or Ubuntu 20.04 LTS (Focal Fossa) for ROS 2 Iron (though Humble is recommended).
-*   **Internet Connection**: Required for downloading packages.
-*   **Sudo Privileges**: Necessary for system-wide installations.
+*   **Operating System** : Ubuntu 22.04 LTS (Jammy Jellyfish) for ROS 2 Humble, or Ubuntu 20.04 LTS (Focal Fossa) for ROS 2 Iron (though Humble is recommended).
+*   **Internet Connection** : Required for downloading packages.
+*   **Sudo Privileges** : Necessary for system-wide installations.
 
 ## 1. Set Up Locale
 
@@ -30,8 +30,8 @@ First, ensure you have `curl` and `software-properties-common` installed, then a
 ```bash
 sudo apt update && sudo apt install software-properties-common curl
 sudo add-apt-repository universe
-sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+sudo curl -sSL https ://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http ://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 ```
 
 ## 3. Install ROS 2 Packages
@@ -57,7 +57,7 @@ Source the ROS 2 setup script in your current shell and optionally add it to you
 # Replace 'humble' with 'iron' if you installed ROS 2 Iron
 source /opt/ros/humble/setup.bash
 
-# Optional: Add to your .bashrc for automatic sourcing on new terminals
+# Optional : Add to your .bashrc for automatic sourcing on new terminals
 echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 ```
 
@@ -73,7 +73,7 @@ rosdep update
 
 ## Verification
 
-To verify your ROS 2 installation, you can open a new terminal and run:
+To verify your ROS 2 installation, you can open a new terminal and run :
 
 ```bash
 ros2 daemon --version

@@ -1,31 +1,29 @@
 ---
-title: "13. Voice-to-Action with Whisper & Gemini"
-sidebar_label: "13. Voice-to-Action"
+title : "13. Voice-to-Action with Whisper & Gemini"
+sidebar_label : "13. Voice-to-Action"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
+## Chapter 13 : Voice-to-Action with Whisper + Gemini 2.5 Flash
 
-## Chapter 13: Voice-to-Action with Whisper + Gemini 2.5 Flash
+### The Final Frontier : Natural Language Interaction
 
-### The Final Frontier: Natural Language Interaction
+We have reached the culmination of our journey. We have built a humanoid robot, simulated it with photorealistic and physically-accurate engines, and programmed it to walk and manipulate objects. Now, we will give it the ability to *understand* and *act* upon human speech. This is the "holy grail" of human-robot interaction : a true Voice-Language-Action (VLA) pipeline.
 
-We have reached the culmination of our journey. We have built a humanoid robot, simulated it with photorealistic and physically-accurate engines, and programmed it to walk and manipulate objects. Now, we will give it the ability to *understand* and *act* upon human speech. This is the "holy grail" of human-robot interaction: a true Voice-Language-Action (VLA) pipeline.
+In this chapter, we will build a complete, end-to-end system that allows you to speak a command, and watch the robot execute it in simulation. Our pipeline will be :
+1.  **Listen :** A Python script will capture live audio from your microphone using Voice Activity Detection (VAD).
+2.  **Transcribe :** The audio will be fed into a local, offline instance of OpenAI's **Whisper** model to be converted into text.
+3.  **Understand :** The transcribed text will be sent to **Google's Gemini 2.5 Flash** model with a carefully engineered prompt, which will parse the user's intent into a structured JSON command.
+4.  **Act :** A ROS 2 node will receive this JSON command and trigger the appropriate ROS 2 Action Server (e.g., navigation or manipulation) to make the robot perform the task.
 
-In this chapter, we will build a complete, end-to-end system that allows you to speak a command, and watch the robot execute it in simulation. Our pipeline will be:
-1.  **Listen:** A Python script will capture live audio from your microphone using Voice Activity Detection (VAD).
-2.  **Transcribe:** The audio will be fed into a local, offline instance of OpenAI's **Whisper** model to be converted into text.
-3.  **Understand:** The transcribed text will be sent to **Google's Gemini 2.5 Flash** model with a carefully engineered prompt, which will parse the user's intent into a structured JSON command.
-4.  **Act:** A ROS 2 node will receive this JSON command and trigger the appropriate ROS 2 Action Server (e.g., navigation or manipulation) to make the robot perform the task.
-
-Our final demonstration will be simple, yet profound: you will say "Bring me the red cup," and the humanoid robot in Isaac Sim will begin moving towards the red cup.
+Our final demonstration will be simple, yet profound : you will say "Bring me the red cup," and the humanoid robot in Isaac Sim will begin moving towards the red cup.
 
 <Mermaid chart={`
 graph TD;
-    A[Microphone] -- Raw Audio --> B(Whisper);
-    B -- Transcribed Text --> C{Gemini 2.5 Flash};
-    C -- Structured JSON --> D[ROS 2 Action Client];
-    D -- Action Goal --> E[ROS 2 Action Server<br/>(e.g., MoveIt 2)];
-    E -- Joint Commands --> F[Simulated Robot];
+    A[Microphone] -- "Raw Audio" --> B(Whisper);
+    B -- "Transcribed Text" --> C{Gemini 2.5 Flash};
+    C -- "Structured JSON" --> D["ROS 2 Action Client"];
+    D -- "Action Goal" --> E["ROS 2 Action Server<br/>(e.g., MoveIt 2)"];
+    E -- "Joint Commands" --> F["Simulated Robot"];
 
     subgraph "Your Local Machine"
         A
@@ -40,31 +38,31 @@ graph TD;
         F
     end
 
-    style C fill:#00ff9d
+    style C fill :#00ff9d
 `} />
 
-### The VLA Pipeline: A ROS 2 Implementation
+### The VLA Pipeline : A ROS 2 Implementation
 
 We will create a new ROS 2 package called `voice_to_action` containing four distinct nodes. This modularity is key to building a robust and debuggable system.
 
 <Mermaid chart={`
 graph TD;
     subgraph "voice_to_action ROS 2 Package"
-        A[mic_publisher_node] -- /voice_audio --> B[speech_to_text_node];
-        B -- /transcribed_text --> C[nlu_node];
-        C -- /robot_action_goal --> D[action_client_node];
+        A[mic_publisher_node] -- "/voice_audio" --> B[speech_to_text_node];
+        B -- "/transcribed_text" --> C[nlu_node];
+        C -- "/robot_action_goal" --> D[action_client_node];
     end
-    style A fill:#lightblue
-    style B fill:#lightblue
-    style C fill:#lightblue
-    style D fill:#lightblue
+    style A fill :#lightblue
+    style B fill :#lightblue
+    style C fill :#lightblue
+    style D fill :#lightblue
 `} />
 
-### Step 1: Capturing Voice (`mic_publisher_node`)
+### Step 1 : Capturing Voice (`mic_publisher_node`)
 
 This node's only job is to listen to the microphone and publish audio chunks when it detects speech. We'll use the `sounddevice` library for audio capture and a simple energy-based VAD.
 
-**`mic_publisher_node.py`:**
+**`mic_publisher_node.py` :**
 ```python
 import rclpy
 from rclpy.node import Node
@@ -72,8 +70,8 @@ from std_msgs.msg import Int16MultiArray
 import numpy as np
 import sounddevice as sd
 
-class MicPublisherNode(Node):
-    def __init__(self):
+class MicPublisherNode(Node) :
+    def __init__(self) :
         super().__init__('mic_publisher_node')
         self.publisher = self.create_publisher(Int16MultiArray, '/voice_audio', 10)
         self.samplerate = 16000
@@ -81,22 +79,22 @@ class MicPublisherNode(Node):
         self.silence_duration = 1.5  # Seconds of silence to trigger publish
         self.get_logger().info("Listening...")
 
-    def listen_and_publish(self):
+    def listen_and_publish(self) :
         recorded_frames = []
         silent_frames = 0
         is_speaking = False
 
-        def audio_callback(indata, frames, time, status):
+        def audio_callback(indata, frames, time, status) :
             nonlocal recorded_frames, silent_frames, is_speaking
             energy = np.linalg.norm(indata)
-            if energy > self.silence_threshold:
+            if energy > self.silence_threshold :
                 is_speaking = True
                 silent_frames = 0
                 recorded_frames.append(indata.copy())
-            elif is_speaking:
+            elif is_speaking :
                 silent_frames += 1
                 recorded_frames.append(indata.copy())
-                if (silent_frames * (frames / self.samplerate)) > self.silence_duration:
+                if (silent_frames * (frames / self.samplerate)) > self.silence_duration :
                     self.get_logger().info("Silence detected, publishing audio.")
                     audio_data = np.concatenate(recorded_frames, axis=0)
                     msg = Int16MultiArray()
@@ -110,35 +108,28 @@ class MicPublisherNode(Node):
                     silent_frames = 0
                     self.get_logger().info("Listening...")
 
-        with sd.InputStream(callback=audio_callback, channels=1, samplerate=self.samplerate, dtype='float32'):
+        with sd.InputStream(callback=audio_callback, channels=1, samplerate=self.samplerate, dtype='float32') :
             rclpy.spin(self)
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = MicPublisherNode()
     node.listen_and_publish()
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
-```
 
-### Step 2: Transcribing Speech with Whisper (`speech_to_text_node`)
-
-This node subscribes to the raw audio, runs it through the Whisper model, and publishes the text. It uses the logic from the `transcribe` function provided in the problem context.
-
-**`speech_to_text_node.py`:**
-```python
-import rclpy
+    import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String as StringMsg
 from std_msgs.msg import Int16MultiArray
 import numpy as np
 import whisper # Requires 'pip install openai-whisper'
 
-class SpeechToTextNode(Node):
-    def __init__(self):
+class SpeechToTextNode(Node) :
+    def __init__(self) :
         super().__init__('speech_to_text_node')
         self.subscription = self.create_subscription(
             Int16MultiArray, '/voice_audio', self.listener_callback, 10)
@@ -148,7 +139,7 @@ class SpeechToTextNode(Node):
         self.model = whisper.load_model("base.en") # Using the small English model for speed
         self.get_logger().info("Whisper model loaded.")
 
-    def listener_callback(self, msg):
+    def listener_callback(self, msg) :
         self.get_logger().info("Received audio for transcription.")
         # Convert Int16MultiArray back to a NumPy array
         audio_data = np.array(msg.data, dtype=np.int16).astype(np.float32) / 32767.0
@@ -156,31 +147,24 @@ class SpeechToTextNode(Node):
         result = self.model.transcribe(audio_data)
         transcribed_text = result['text']
         
-        self.get_logger().info(f'Whisper transcribed: "{transcribed_text}"')
+        self.get_logger().info(f'Whisper transcribed : "{transcribed_text}"')
         
         # Publish the text
         text_msg = StringMsg()
         text_msg.data = transcribed_text
         self.publisher.publish(text_msg)
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = SpeechToTextNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
-```
 
-### Step 3: Understanding Intent with Gemini 2.5 Flash (`nlu_node`)
-
-This is the AI core of our pipeline. It takes the transcribed text and uses an LLM to convert it into a machine-readable command. **Prompt engineering is everything here.**
-
-**`nlu_node.py`:**
-```python
-import rclpy
+    import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String as StringMsg
 import google.generativeai as genai
@@ -188,10 +172,10 @@ import json
 import os
 
 # Configure with your API key
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+genai.configure(api_key=os.environ[GEMINI_API_KEY])
 
-class NluNode(Node):
-    def __init__(self):
+class NluNode(Node) :
+    def __init__(self) :
         super().__init__('nlu_node')
         self.subscription = self.create_subscription(
             StringMsg, '/transcribed_text', self.listener_callback, 10)
@@ -201,84 +185,70 @@ class NluNode(Node):
         self.model = genai.GenerativeModel('gemini-1.5-flash') # Using Gemini 1.5 Flash
         self.get_logger().info("NLU node ready.")
         
-    def build_prompt(self, user_text):
+    def build_prompt(self, user_text) :
         # This prompt is the most critical part of the system.
         # It constrains the LLM to a specific output format and set of known actions/objects.
-        return f"""
+        return f"
         You are the Natural Language Understanding (NLU) unit for a household robot.
         Your task is to convert a user's spoken command into a structured JSON object.
         The robot has a limited set of capabilities and known objects.
 
-        # Allowed Actions:
-        - "GO_TO": Navigate to a named location.
-        - "PICK_UP": Pick up a specific object.
+        # Allowed Actions :
+        - "GO_TO" : Navigate to a named location.
+        - "PICK_UP" : Pick up a specific object.
 
-        # Known Objects & Locations:
+        # Known Objects & Locations :
         - "red_cup"
         - "blue_block"
         - "kitchen_table"
         - "charging_station"
 
-        # User Command:
+        # User Command :
         "{user_text}"
 
-        # Output:
-        Convert the user command into a single JSON object with two keys: "action" and "target".
+        # Output :
+        Convert the user command into a single JSON object with two keys : "action" and "target".
         The "action" must be one of the Allowed Actions.
         The "target" must be one of the Known Objects or Locations.
         If the command is unclear or requests something impossible, output a JSON object with the action "FAIL".
         Respond with ONLY the JSON object and nothing else.
-        """
+        "
 
-    def listener_callback(self, msg):
+    def listener_callback(self, msg) :
         user_command = msg.data
-        self.get_logger().info(f'Received text: "{user_command}"')
+        self.get_logger().info(f'Received text : "{user_command}"')
         
         prompt = self.build_prompt(user_command)
         
-        try:
+        try :
             response = self.model.generate_content(prompt)
             # Clean up the response to get only the JSON
-            json_text = response.text.strip().replace("`", "").replace("json", "")
-            self.get_logger().info(f"Gemini responded with: {json_text}")
+            json_text = response.text.strip().replace("`", ").replace("json", ")
+            self.get_logger().info(f"Gemini responded with : {json_text}")
 
             # Validate and publish
             parsed_json = json.loads(json_text)
-            if "action" in parsed_json and "target" in parsed_json:
+            if "action" in parsed_json and "target" in parsed_json :
                 json_msg = StringMsg()
                 json_msg.data = json.dumps(parsed_json)
                 self.publisher.publish(json_msg)
-            else:
+            else :
                  self.get_logger().error("Invalid JSON from LLM.")
 
-        except Exception as e:
-            self.get_logger().error(f"Failed to call Gemini or parse response: {e}")
+        except Exception as e :
+            self.get_logger().error(f"Failed to call Gemini or parse response : {e}")
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = NluNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
-```
-<Mermaid chart={`
-graph LR;
-    A[User Text<br/><i>"Bring me the red cup"</i>] --> B{LLM Prompt};
-    B --> C[Gemini 2.5 Flash];
-    C --> D[JSON String<br/><i>'{"action": "PICK_UP", "target": "red_cup"}'</i>];
-    style D fill:#00ff9d
-`} />
 
-### Step 4: From Intent to Action (`action_client_node`)
-
-This final node translates the symbolic JSON command into a concrete call to a ROS 2 Action Server. It's the bridge from language to movement.
-
-**`action_client_node.py`:**
-```python
-import rclpy
+    import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from std_msgs.msg import String as StringMsg
@@ -286,8 +256,8 @@ from my_robot_interfaces.action import PickUpObject, NavigateToPose # Assumed cu
 from geometry_msgs.msg import PoseStamped
 import json
 
-class ActionClientNode(Node):
-    def __init__(self):
+class ActionClientNode(Node) :
+    def __init__(self) :
         super().__init__('action_client_node')
         self.subscription = self.create_subscription(
             StringMsg, '/robot_action_goal', self.listener_callback, 10)
@@ -298,68 +268,45 @@ class ActionClientNode(Node):
 
         # Pre-defined knowledge of the world
         self.object_locations = {
-            "red_cup": PoseStamped(...), # Fill in actual coordinates
-            "blue_block": PoseStamped(...)
+            "red_cup" : PoseStamped(), # Fill in actual coordinates
+            "blue_block" : PoseStamped()
         }
         self.get_logger().info("Action client node ready.")
 
-    def listener_callback(self, msg):
-        try:
+    def listener_callback(self, msg) :
+        try :
             command = json.loads(msg.data)
             action_type = command.get("action")
             target = command.get("target")
             self.get_logger().info(f"Received action '{action_type}' for target '{target}'")
 
-            if action_type == "PICK_UP":
-                if target in self.object_locations:
+            if action_type == "PICK_UP" :
+                if target in self.object_locations :
                     goal_pose = self.object_locations[target]
                     self.send_pickup_goal(goal_pose)
-                else:
-                    self.get_logger().error(f"Unknown target for PICK_UP: {target}")
+                else :
+                    self.get_logger().error(f"Unknown target for PICK_UP : {target}")
             
-            elif action_type == "GO_TO":
+            elif action_type == "GO_TO" :
                  # Similar logic for navigation...
                  pass
 
-        except json.JSONDecodeError:
+        except json.JSONDecodeError :
             self.get_logger().error("Received invalid JSON action goal.")
 
-    def send_pickup_goal(self, pose):
+    def send_pickup_goal(self, pose) :
         self._pickup_client.wait_for_server()
         goal_msg = PickUpObject.Goal()
         goal_msg.target_pose = pose
         self._pickup_client.send_goal_async(goal_msg)
         self.get_logger().info(f"Sent PICK_UP goal to action server.")
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = ActionClientNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
-```
-
-### The Full System in Action: The Simulation Demo
-
-1.  **Set up the Scene:** In Isaac Sim, load the apartment world from Chapter 6. Place a red cup model at a known location (e.g., on a table). Place the humanoid robot at a starting position.
-2.  **Define Action Servers:** Ensure the robot's control system is running, with Action Servers for `/pickup_object` and `/navigate_to_pose` available (as developed in previous chapters). You will need to fill in the `object_locations` dictionary in `action_client_node.py` with the correct coordinates of the red cup in your scene.
-3.  **Launch the VLA Pipeline:** Create a launch file, `voice_to_action.launch.py`, that starts all four of our new nodes.
-4.  **Speak the Command:** Run the launch file. The `mic_publisher_node` will print "Listening...". Speak clearly into your microphone: **"Bring me the red cup."**
-5.  **Observe the Chain Reaction:**
-    *   The mic node will detect silence and publish the audio.
-    *   The Whisper node will log: `Whisper transcribed: "Bring me the red cup."`
-    *   The NLU node will log: `Gemini responded: {"action": "PICK_UP", "target": "red_cup"}`
-    *   The action client node will log: `Sent PICK_UP goal to action server.`
-6.  **Watch the Robot Move:** In the Isaac Sim window, you will see the humanoid robot begin to execute its pre-programmed pickup behavior, moving its arm towards the red cup.
-
-### Conclusion: The Future is Spoken
-
-You have just built one of the most complex and powerful systems in modern robotics. This Voice-Language-Action pipeline, though simple in its current form, represents a paradigm shift in human-robot interaction. By offloading the ambiguity of human language to a powerful LLM and creating a structured interface between language and action, we have made our robot exponentially more intuitive and useful.
-
-The latency, accuracy, and capabilities can all be improved. The Whisper model could be larger, the Gemini prompt could be more robust, the action library could be expanded. But the fundamental architecture—Listen, Transcribe, Understand, Act—is a powerful and scalable blueprint for the future of intelligent, interactive robots. You have not just programmed a robot; you have given it a way to listen.
-
-***
-_(This file provides the complete code and conceptual framework for a full VLA pipeline. To run it, the user must create a ROS 2 package from the provided Python nodes, install the dependencies like `whisper` and `google-generativeai`, and have pre-existing ROS 2 Action Servers for their robot's physical capabilities.)_

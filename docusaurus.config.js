@@ -7,7 +7,7 @@ const config = {
   url: 'https://bariqa-anwar.github.io',
   baseUrl: '/', 
 
-  onBrokenLinks: 'ignore', // Changed to ignore temporarily to help you get the site up
+  onBrokenLinks: 'ignore', 
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
 
@@ -15,17 +15,49 @@ const config = {
   projectName: 'humanoid-robotics',
   trailingSlash: false,
 
-  // --- MERMAID SUPPORT START ---
+  // --- MERMAID SUPPORT ---
   markdown: {
     mermaid: true,
   },
   themes: ['@docusaurus/theme-mermaid'],
-  // --- MERMAID SUPPORT END ---
 
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  // Webpack Config Fix for Node.js Modules
+  plugins: [
+    () => ({
+      name: 'webpack-config-fix',
+      configureWebpack() {
+        return {
+          resolve: {
+            fallback: {
+              fs: false,
+              path: false,
+              os: false,
+              net: false,
+              tls: false,
+              child_process: false,
+              stream: false,
+              zlib: false,
+              util: false,
+              assert: false,
+              readline: false,
+              http: false,
+              https: false,
+              url: false,
+              process: false,
+              crypto: false,
+              dns: false,
+              module: false,
+            },
+          },
+        };
+      },
+    }),
+  ],
 
   presets: [
     [
@@ -55,10 +87,7 @@ const config = {
       },
       navbar: {
         title: 'Physical AI Book',
-        logo: {
-          alt: 'Physical AI Logo',
-          src: 'img/logo.svg',
-        },
+        // Removed broken logo config to only show Title text
         items: [
           { to: '/docs/intro', label: 'Home', position: 'left' },
           { 
@@ -87,7 +116,7 @@ const config = {
             ],
           },
         ],
-        copyright: `© ${new Date().getFullYear()} Physical AI Book – Authored by Gemini 2.5 Flash`,
+        copyright: `© ${new Date().getFullYear()} Physical AI Book - Authored by Gemini 3 Flash`,
       },
       prism: {
         theme: prismThemes.github,

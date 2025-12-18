@@ -21,7 +21,7 @@ app.add_middleware(
 
 # Initialize Clients
 co = cohere.Client(os.getenv("COHERE_API_KEY"))
-qdrant = QdrantClient(path="qdrant_storage") # Or your specific URL/Path
+qdrant = QdrantClient(path="qdrant_storage") 
 
 class ChatRequest(BaseModel):
     message: str
@@ -29,25 +29,37 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        # 1. Search Qdrant for book context
+        # 1. Translate your text into a Vector
+        # We use v3.0 here, which remains a standard search model in 2025
+        embed_res = co.embed(
+            texts=[request.message],
+            model="embed-english-v3.0", 
+            input_type="search_query"
+        )
+        query_vector = embed_res.embeddings[0]
+
+        # 2. Search Qdrant for context
         search_result = qdrant.query_points(
             collection_name="robotics_book",
-            query_content=request.message,
+            query=query_vector, 
             limit=3
         ).points
 
-        context = "\n".join([r.payload['text'] for r in search_result])
+        context = "\n".join([r.payload['text'] for r in search_result]) if search_result else ""
 
-        # 2. Generate Response with Cohere
+        # 3. Generate Response with an ACTIVE 2025 model
+        # UPDATED: command-r-plus replaced with command-a-03-2025
         prompt = f"Context from the Robotics Book:\n{context}\n\nUser Question: {request.message}\nAnswer:"
         
         response = co.chat(
             message=prompt,
-            model="command-r-plus"
+            model="command-r-08-2024" 
         )
 
-        return {"reply": response.text}
+        return {"response": response.text}
+        
     except Exception as e:
+        print(f"Backend Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

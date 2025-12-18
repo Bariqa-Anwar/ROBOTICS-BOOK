@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position : 1
 ---
 
 # Speech-to-Text with OpenAI Whisper
@@ -12,8 +12,8 @@ This section will guide you through setting up Whisper for STT in your ROS 2 env
 
 To use OpenAI's Whisper model, you will need an OpenAI API key.
 
-1.  **Obtain an API Key**: If you don't have one, visit the [OpenAI API website](https://platform.openai.com/account/api-keys) and create a new secret key.
-2.  **Securely Store the Key**: **Never embed your API key directly in your code.** The most secure way to handle it is by setting it as an environment variable.
+1.  **Obtain an API Key** : If you don't have one, visit the [OpenAI API website](https ://platform.openai.com/account/api-keys) and create a new secret key.
+2.  **Securely Store the Key** : **Never embed your API key directly in your code.** The most secure way to handle it is by setting it as an environment variable.
 
     ```bash
     export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -45,8 +45,8 @@ import io
 # import sounddevice as sd # For real audio capture - requires PortAudio
 # import numpy as np # For audio processing
 
-class SpeechToTextNode(Node):
-    def __init__(self):
+class SpeechToTextNode(Node) :
+    def __init__(self) :
         super().__init__('speech_to_text_node')
         self.publisher_ = self.create_publisher(String, '/human_speech_text', 10)
         self.openai_client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -56,7 +56,7 @@ class SpeechToTextNode(Node):
         # Simulate an audio input for demonstration purposes
         self.create_timer(5.0, self.simulate_audio_input)
 
-    def simulate_audio_input(self):
+    def simulate_audio_input(self) :
         # In a real scenario, this would be audio captured from a microphone
         # For simulation, we'll use a dummy audio file or generate a prompt
         
@@ -68,13 +68,13 @@ class SpeechToTextNode(Node):
         # is to assume audio input and then send it to OpenAI.
         # Let's create a dummy in-memory "audio" for the Whisper API call.
         
-        # NOTE: This part needs actual audio data. For a functional example,
+        # NOTE : This part needs actual audio data. For a functional example,
         # you'd replace `io.BytesIO(b'...')` with actual audio file reading or microphone input.
         # For simplicity, we are simulating the *result* of audio capture for the Whisper API call.
         
         # Mocking the audio file object that Whisper expects
         # In a real setup, you would read actual audio bytes from a mic or file
-        # with open("path/to/your/audio.wav", "rb") as audio_file:
+        # with open("path/to/your/audio.wav", "rb") as audio_file :
         #     transcript = self.openai_client.audio.transcriptions.create(
         #         model="whisper-1", 
         #         file=audio_file
@@ -84,10 +84,10 @@ class SpeechToTextNode(Node):
         # we will simulate the transcription process for demonstration.
         # In a real application, replace this with actual audio processing.
         
-        try:
+        try :
             # Simulate an audio stream (e.g., from a microphone or file)
             # This is a placeholder; actual audio capture would be here.
-            # Example: with sd.RawInputStream(samplerate=16000, blocksize=1024, dtype='int16', channels=1) as stream:
+            # Example : with sd.RawInputStream(samplerate=16000, blocksize=1024, dtype='int16', channels=1) as stream :
             #              audio_data = stream.read(some_duration)
             #              audio_buffer = io.BytesIO(audio_data.tobytes())
             #              audio_buffer.name = "audio.wav" # Whisper API needs a file-like object with a name
@@ -105,19 +105,19 @@ class SpeechToTextNode(Node):
             msg = String()
             msg.data = transcribed_text
             self.publisher_.publish(msg)
-            self.get_logger().info(f'Transcribed and Published: "{msg.data}"')
+            self.get_logger().info(f'Transcribed and Published : "{msg.data}"')
 
-        except Exception as e:
-            self.get_logger().error(f"Error during transcription: {e}")
+        except Exception as e :
+            self.get_logger().error(f"Error during transcription : {e}")
 
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = SpeechToTextNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
 ```

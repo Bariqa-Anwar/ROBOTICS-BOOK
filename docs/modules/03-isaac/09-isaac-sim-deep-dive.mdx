@@ -1,48 +1,46 @@
 ---
-title: "09. Isaac Sim: A Deep Dive"
-sidebar_label: "09. Isaac Sim & Synthetic Data"
+title : "09. Isaac Sim : A Deep Dive"
+sidebar_label : "09. Isaac Sim & Synthetic Data"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
-## Chapter 09: Isaac Sim: Domain Randomization & Synthetic Data at Scale
 
-### Introduction: The Dawn of Sim-to-Real
+## Chapter 09 : Isaac Sim : Domain Randomization & Synthetic Data at Scale
 
-In the previous module, we explored the dual-simulator approach, using Gazebo for physics and Unity for visualization. We are now entering a new paradigm with **NVIDIA Isaac Sim**, a robotics simulation platform built on the **NVIDIA Omniverse™**. Isaac Sim is not just another simulator; it's a powerful toolkit designed from the ground up to solve one of the most significant challenges in modern robotics and AI: the **sim-to-real gap**.
+### Introduction : The Dawn of Sim-to-Real
 
-Isaac Sim achieves this through a potent combination of three core technologies:
-1.  **NVIDIA Omniverse™:** A real-time 3D development platform that enables collaborative creation and simulation of large-scale virtual worlds.
-2.  **Universal Scene Description (USD):** The foundational data model for Omniverse, allowing for non-destructive composition and editing of complex 3D scenes.
-3.  **NVIDIA PhysX™ 5:** A state-of-the-art, GPU-accelerated physics engine capable of simulating millions of dynamic objects.
+In the previous module, we explored the dual-simulator approach, using Gazebo for physics and Unity for visualization. We are now entering a new paradigm with **NVIDIA Isaac Sim**, a robotics simulation platform built on the **NVIDIA Omniverse™**. Isaac Sim is not just another simulator; it's a powerful toolkit designed from the ground up to solve one of the most significant challenges in modern robotics and AI : the **sim-to-real gap**.
 
-The true power of Isaac Sim for robotics, however, lies in its ability to generate vast quantities of high-quality, physically-accurate, and perfectly-labeled **synthetic data**. This chapter is a deep dive into this capability, focusing on two key pillars: **Domain Randomization** and the **Replicator** framework.
+Isaac Sim achieves this through a potent combination of three core technologies :
+1.  **NVIDIA Omniverse™ :** A real-time 3D development platform that enables collaborative creation and simulation of large-scale virtual worlds.
+2.  **Universal Scene Description (USD) :** The foundational data model for Omniverse, allowing for non-destructive composition and editing of complex 3D scenes.
+3.  **NVIDIA PhysX™ 5 :** A state-of-the-art, GPU-accelerated physics engine capable of simulating millions of dynamic objects.
+
+The true power of Isaac Sim for robotics, however, lies in its ability to generate vast quantities of high-quality, physically-accurate, and perfectly-labeled **synthetic data**. This chapter is a deep dive into this capability, focusing on two key pillars : **Domain Randomization** and the **Replicator** framework.
 
 <Mermaid chart={`
 graph TD
-    subgraph Isaac Sim
-        A[Omniverse Platform]
-        B[PhysX 5 Engine]
-        C[USD Data Model]
+    subgraph "Isaac Sim"
+        A["Omniverse Platform"] B["PhysX 5 Engine"] C["USD Data Model"]
     end
     A & B & C --> D{High-Fidelity Simulation};
-    D --> E[Synthetic Data Generation];
-    E --> F[Train Robust AI Models];
-    F --> G[Bridge the Sim-to-Real Gap];
-    style G fill:#00ff9d,stroke:#333,stroke-width:4px
+    D --> E["Synthetic Data Generation"];
+    E --> F["Train Robust AI Models"];
+    F --> G["Bridge the Sim-to-Real Gap"];
+    style G fill :#00ff9d,stroke :#333,stroke-width :4px
 `} />
 
 ### Why Synthetic Data? The Data Bottleneck
 
-Training modern deep learning models for perception tasks like object detection or segmentation requires massive datasets. For robotics, this data must be labeled with pixel-perfect accuracy (e.g., bounding boxes, segmentation masks). Creating such datasets from real-world imagery is:
-*   **Expensive:** It requires significant manual labor and time.
-*   **Slow:** Data collection is limited by physical constraints.
-*   **Incomplete:** It's impossible to capture every possible real-world scenario, lighting condition, or object orientation.
-*   **Dangerous:** Capturing failure cases (e.g., a robot falling) can be risky.
+Training modern deep learning models for perception tasks like object detection or segmentation requires massive datasets. For robotics, this data must be labeled with pixel-perfect accuracy (e.g., bounding boxes, segmentation masks). Creating such datasets from real-world imagery is :
+*   **Expensive :** It requires significant manual labor and time.
+*   **Slow :** Data collection is limited by physical constraints.
+*   **Incomplete :** It's impossible to capture every possible real-world scenario, lighting condition, or object orientation.
+*   **Dangerous :** Capturing failure cases (e.g., a robot falling) can be risky.
 
 Synthetic data generation solves this by programmatically creating a virtually infinite stream of perfectly labeled data, covering a wide distribution of scenarios.
 
-### Domain Randomization (DR): Forcing the AI to Generalize
+### Domain Randomization (DR) : Forcing the AI to Generalize
 
 If we train a model on a single, static simulation, it will overfit to that specific environment. It won't learn what a "chair" is; it will learn what *that specific chair model* looks like under *those specific lighting conditions*.
 
@@ -50,22 +48,22 @@ If we train a model on a single, static simulation, it will overfit to that spec
 
 <Mermaid chart={`
 graph TD;
-    subgraph Randomization Domains
-        A[Lighting] --> A1[Position, Intensity, Color];
-        B[Textures] --> B1[Object Materials, Background];
-        C[Camera] --> C1[Position, Angle, FOV];
-        D[Poses] --> D1[Robot & Object Positions, Joint Angles];
-        E[Distractors] --> E1[Number & Type of Background Objects];
+    subgraph "Randomization Domains"
+        A[Lighting] --> A1["Position, Intensity, Color"];
+        B[Textures] --> B1["Object Materials, Background"];
+        C[Camera] --> C1["Position, Angle, FOV"];
+        D[Poses] --> D1["Robot & Object Positions, Joint Angles"];
+        E[Distractors] --> E1["Number & Type of Background Objects"];
     end
     A & B & C & D & E --> F{Randomized Scene};
-    F --> G[Perception Model];
+    F --> G["Perception Model"];
     G -- Learns --> H(Invariant Features);
-    style H fill:#00ff9d
+    style H fill :#00ff9d
 `} />
 
 By training on thousands of images where the lighting, camera angle, and background textures are constantly changing, the model learns that the chair's *shape* is the important feature, not its color or the direction of the shadows.
 
-### Part 1: Setting Up Isaac Sim
+### Part 1 : Setting Up Isaac Sim
 
 Isaac Sim is installed and managed through the **NVIDIA Omniverse Launcher**.
 1.  Download and install the Launcher from the NVIDIA website.
@@ -74,35 +72,35 @@ Isaac Sim is installed and managed through the **NVIDIA Omniverse Launcher**.
 
 Python scripts are the primary way to interact with Isaac Sim programmatically. You execute them using the bundled `python.sh` or `python.exe` script, which ensures all necessary environment variables and paths are set.
 
-### Part 2: A Primer on Universal Scene Description (USD)
+### Part 2 : A Primer on Universal Scene Description (USD)
 
 USD is the backbone of Omniverse. Think of it as a rich, layerable, and collaborative version of a file format.
-*   **Stage:** The in-memory representation of a scene.
-*   **Prim (Primitive):** The basic building block of a USD scene (e.g., a mesh, a camera, a light). Prims are organized in a hierarchy, like a filesystem.
-*   **Property:** An attribute of a prim (e.g., its position, color, or a custom variable).
+*   **Stage :** The in-memory representation of a scene.
+*   **Prim (Primitive) :** The basic building block of a USD scene (e.g., a mesh, a camera, a light). Prims are organized in a hierarchy, like a filesystem.
+*   **Property :** An attribute of a prim (e.g., its position, color, or a custom variable).
 
 <Mermaid chart={`
 graph TD;
-    Stage --- root[/world];
-    root --- link1[/world/robot];
-    root --- link2[/world/light];
-    link1 --- link3[/world/robot/torso];
-    link3 --- link4[Property: color];
-    link3 --- link5[Property: position];
+    Stage --- root["/world"];
+    root --- link1["/world/robot"];
+    root --- link2["/world/light"];
+    link1 --- link3["/world/robot/torso"];
+    link3 --- link4["Property : color"];
+    link3 --- link5["Property : position"];
 
-    style Stage fill:#00ff9d
+    style Stage fill :#00ff9d
 `} />
 
-### Part 3: The Replicator Framework
+### Part 3 : The Replicator Framework
 
 `omni.replicator.core` is Isaac Sim's powerful, declarative API for building synthetic data pipelines. You don't write `for` loops to change things; you define *what* you want to randomize, and the **Orchestrator** takes care of running the pipeline.
 
-**The Replicator Workflow:**
-1.  **Get a handle to Replicator:** `rep.orchestrator.run()`.
-2.  **Define a Trigger:** Tell the orchestrator when to capture data. `rep.orchestrator.on_frame()` is common.
-3.  **Define Randomizer Functions:** Within the trigger, define what to randomize.
-4.  **Define the Output (Annotators):** Specify what data you need (RGB, bounding boxes, etc.).
-5.  **Attach Annotators to a Render Product:** Connect your data requirements to a camera.
+**The Replicator Workflow :**
+1.  **Get a handle to Replicator :** `rep.orchestrator.run()`.
+2.  **Define a Trigger :** Tell the orchestrator when to capture data. `rep.orchestrator.on_frame()` is common.
+3.  **Define Randomizer Functions :** Within the trigger, define what to randomize.
+4.  **Define the Output (Annotators) :** Specify what data you need (RGB, bounding boxes, etc.).
+5.  **Attach Annotators to a Render Product :** Connect your data requirements to a camera.
 
 <Mermaid chart={`
 sequenceDiagram
@@ -110,18 +108,18 @@ sequenceDiagram
     participant T as Trigger (on_frame)
     participant R as Randomizers
     participant A as Annotators
-    O->>T: New Frame
-    T->>R: randomize_scene()
-    R-->>T: Scene is Randomized
-    T->>A: capture_data()
-    A-->>T: Data Captured
+    O->>T : New Frame
+    T->>R : randomize_scene()
+    R-->>T : Scene is Randomized
+    T->>A : capture_data()
+    A-->>T : Data Captured
 `} />
 
-### Part 4: The Complete Replicator Script
+### Part 4 : The Complete Replicator Script
 
 This script will generate 10,000 labeled images of our humanoid robot. It will randomize lighting, camera position, robot joint poses, and add distractor objects.
 
-**`humanoid_replicator.py`:**
+**`humanoid_replicator.py` :**
 ```python
 import omni.replicator.core as rep
 import omni.isaac.core.utils.prims as prim_utils
@@ -133,23 +131,23 @@ import numpy as np
 # Assume the humanoid USD is available at this path
 ROBOT_USD = "/path/to/your/h1.usd" 
 # A collection of textures to apply randomly
-TEXTURES = ["/path/to/texture1.mdl", "/path/to/texture2.png", "/path/to/texture3.jpg"]
+TEXTURES = [/path/to/texture1.mdl", "/path/to/texture2.png", /path/to/texture3.jpg]
 # A folder of distractor objects (cubes, spheres, etc.)
 DISTRACTOR_GLOB_PATTERN = "/path/to/your/distractors/*.usd"
 
-with rep.new_layer():
+with rep.new_layer() :
     # --- SETUP SCENE ---
     # Setup camera and a dome light for ambient lighting
     camera = rep.create.camera(position=(5, 5, 5), look_at=(0, 0, 1))
     dome_light = rep.create.dome_light(rotation=(270, 0, 0), texture="/path/to/your/hdri_sky.hdr")
 
     # --- DEFINE THE RANDOMIZATION GRAPH ---
-    def robot_and_distractors_placement():
+    def robot_and_distractors_placement() :
         # Load the robot and distractors
         robot = rep.create.from_usd(ROBOT_USD)
         distractors = rep.create.from_glob(pattern=DISTRACTOR_GLOB_PATTERN, count=5)
 
-        with robot:
+        with robot :
             # Randomize the robot's root position and joint angles
             rep.modify.pose(
                 position=rep.distribution.uniform((-0.5, -0.5, 0), (0.5, 0.5, 0)),
@@ -158,12 +156,12 @@ with rep.new_layer():
             # This requires knowing the joint names from the USD
             # Example for a 'head_pan_joint'
             rep.modify.joint_state(
-                joint_names=["head_pan_joint", "head_tilt_joint"], # Add all 22 joints
+                joint_names=[head_pan_joint", head_tilt_joint], # Add all 22 joints
                 position=rep.distribution.uniform(-np.pi/4, np.pi/4)
             )
         
         # Randomize placement of distractor objects around the robot
-        with distractors:
+        with distractors :
             rep.modify.pose(
                 position=rep.distribution.uniform((-2, -2, 0.5), (2, 2, 2)),
                 scale=rep.distribution.uniform(0.5, 2.0),
@@ -173,29 +171,29 @@ with rep.new_layer():
     # Register the randomization function
     rep.randomizer.register(robot_and_distractors_placement)
 
-    def domain_randomizers():
+    def domain_randomizers() :
         # Get all prims in the scene
-        prims = rep.get.prims(semantics=[("class", "robot"), ("class", "distractor")])
-        lights = rep.get.prims(light_types=["Sphere", "Dome"])
+        prims = rep.get.prims(semantics=[("class", "robot"), ("class", distractor)])
+        lights = rep.get.prims(light_types=[Sphere", Dome])
 
         # Randomize materials and textures
-        with prims:
+        with prims :
             rep.randomizer.materials(rep.get.materials(TEXTURES, count=5))
 
         # Randomize lighting
-        with lights:
+        with lights :
             rep.modify.attribute("intensity", rep.distribution.uniform(500, 3000))
             rep.modify.pose(rotation=rep.distribution.uniform((-90, -90, 0), (90, 90, 0)))
 
         # Randomize camera position
-        with camera:
+        with camera :
             rep.modify.pose(position=rep.distribution.uniform((3, 3, 3), (7, 7, 7)))
 
     # Register the randomization function
     rep.randomizer.register(domain_randomizers)
     
     # --- RUN THE SIMULATION AND RENDER ---
-    with rep.trigger.on_frame(num_frames=10000):
+    with rep.trigger.on_frame(num_frames=10000) :
         rep.randomizer.robot_and_distractors_placement()
         rep.randomizer.domain_randomizers()
 
@@ -220,20 +218,20 @@ with rep.new_layer():
 rep.orchestrator.run()
 ```
 
-### Part 5: Running the Script and Understanding the Output
+### Part 5 : Running the Script and Understanding the Output
 
-To run this script, save it as `humanoid_replicator.py` and execute it from your Isaac Sim directory:
+To run this script, save it as `humanoid_replicator.py` and execute it from your Isaac Sim directory :
 
 `./python.sh /path/to/your/humanoid_replicator.py`
 
-The script will run for 10,000 frames. In each frame, it will:
+The script will run for 10,000 frames. In each frame, it will :
 1.  Place the robot and distractors randomly.
 2.  Randomize their textures, the lighting, and the camera position.
 3.  Render an image.
 4.  Compute the ground truth labels.
 5.  Save everything to the `_output_replicator_humanoid` directory.
 
-The output directory will be structured like this:
+The output directory will be structured like this :
 ```
 _output_replicator_humanoid/
 ├── image_0/

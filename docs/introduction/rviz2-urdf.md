@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position : 5
 ---
 
 # Visualizing URDF in RViz2
@@ -8,7 +8,7 @@ RViz2 (ROS Visualization) is a powerful 3D visualizer for displaying sensor data
 
 ## 1. Launching RViz2
 
-First, ensure your ROS 2 environment is sourced (as discussed in the [ROS 2 Installation Guide](./ros2-install.mdx)). You can launch RViz2 directly from your terminal.
+First, ensure your ROS 2 environment is sourced (as discussed in the [ROS 2 Installation Guide](./ros2-install.md)). You can launch RViz2 directly from your terminal.
 
 ```bash
 rviz2
@@ -20,24 +20,24 @@ This will open the RViz2 application. Initially, it will appear empty.
 
 To display your URDF robot model, you need to add a "RobotModel" display type to RViz2 and tell it where to find your URDF file and the robot's description parameter.
 
-### Step 2.1: Set up Robot Description
+### Step 2.1 : Set up Robot Description
 
 ROS 2 uses a parameter server to store the robot's description. You'll typically use `xacro` (XML Macros) to parse your URDF and load it onto the parameter server. For simplicity, we'll directly load our simple URDF for now.
 
-First, make sure `ros2 launch` and `urdf_tutorial` are installed if you don't have them:
+First, make sure `ros2 launch` and `urdf_tutorial` are installed if you don't have them :
 
 ```bash
 sudo apt install ros-humble-ros2launch ros-humble-urdf-tutorial
 ```
 
-Now, you can launch a minimal setup that publishes the robot description:
+Now, you can launch a minimal setup that publishes the robot description :
 
 ```bash
-ros2 launch urdf_tutorial display.launch.py model:=$(ros2 pkg prefix urdf_tutorial)/share/urdf_tutorial/urdf/01-myfirst.urdf
+ros2 launch urdf_tutorial display.launch.py model :=$(ros2 pkg prefix urdf_tutorial)/share/urdf_tutorial/urdf/01-myfirst.urdf
 ```
-*(Note: Replace `01-myfirst.urdf` with the path to your URDF file if needed for testing, or use a custom launch file as shown later)*
+*(Note : Replace `01-myfirst.urdf` with the path to your URDF file if needed for testing, or use a custom launch file as shown later)*
 
-### Step 2.2: Add RobotModel Display in RViz2
+### Step 2.2 : Add RobotModel Display in RViz2
 
 1.  In the RViz2 window, click the "Add" button in the "Displays" panel (bottom left).
 2.  Select "RobotModel" from the list and click "OK".
@@ -58,7 +58,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
-def generate_launch_description():
+def generate_launch_description() :
     pkg_name = 'my_robot_pkg' # Replace with your package name
     urdf_file_path = os.path.join(get_package_share_directory(pkg_name), 'urdf', 'simple_box.urdf')
 
@@ -68,7 +68,7 @@ def generate_launch_description():
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            parameters=[{'robot_description': urdf_file_path}],
+            parameters=[{'robot_description' : urdf_file_path}],
         ),
         Node(
             package='rviz2',
@@ -81,7 +81,7 @@ def generate_launch_description():
 
 Save this to `ros2_ws/src/my_robot_pkg/launch/display_simple_box.launch.py`. You will also need to update your `setup.py` to install this launch file. (We will cover this in detail in Module 1).
 
-You can then launch it with:
+You can then launch it with :
 
 ```bash
 ros2 launch my_robot_pkg display_simple_box.launch.py
@@ -91,7 +91,7 @@ This will automatically open RViz2 and display your `simple_box.urdf`.
 
 ### Visualizing `simple_cylinder_joint.urdf`
 
-Now let's visualize a URDF with a joint. Here's the content of `simple_cylinder_joint.urdf`:
+Now let's visualize a URDF with a joint. Here's the content of `simple_cylinder_joint.urdf` :
 
 ```xml
 <?xml version="1.0"?>
@@ -145,7 +145,7 @@ Now let's visualize a URDF with a joint. Here's the content of `simple_cylinder_
 </robot>
 ```
 
-To launch this in RViz2, you would create a similar launch file, replacing `simple_box.urdf` with `simple_cylinder_joint.urdf`, and then run:
+To launch this in RViz2, you would create a similar launch file, replacing `simple_box.urdf` with `simple_cylinder_joint.urdf`, and then run :
 
 ```bash
 ros2 launch my_robot_pkg display_simple_cylinder_joint.launch.py

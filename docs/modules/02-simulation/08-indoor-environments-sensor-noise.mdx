@@ -1,43 +1,42 @@
 ---
-title: "08. Realistic Environments & Sensor Noise"
-sidebar_label: "08. Environments & Noise"
+title : "08. Realistic Environments & Sensor Noise"
+sidebar_label : "08. Environments & Noise"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
-## Chapter 08: Realistic Indoor Environments & Sensor Noise Modeling
 
-### Introduction: Closing the Sim-to-Real Gap
+## Chapter 08 : Realistic Indoor Environments & Sensor Noise Modeling
 
-Throughout this module, we have built two powerful digital twins of our humanoid robot: a **physics twin** in Gazebo, optimized for dynamic and control algorithm testing, and a **beauty twin** in Unity, designed for photorealistic visualization and perception work. However, a significant challenge remains in all simulation work: the **"Sim-to-Real Gap."** This is the gap between how well an algorithm performs in simulation versus how it performs in the messy, unpredictable real world.
+### Introduction : Closing the Sim-to-Real Gap
+
+Throughout this module, we have built two powerful digital twins of our humanoid robot : a **physics twin** in Gazebo, optimized for dynamic and control algorithm testing, and a **beauty twin** in Unity, designed for photorealistic visualization and perception work. However, a significant challenge remains in all simulation work : the **"Sim-to-Real Gap."** This is the gap between how well an algorithm performs in simulation versus how it performs in the messy, unpredictable real world.
 
 Our simulations, with their perfect geometric shapes and flawless sensor data, are too clean. An algorithm trained exclusively in this pristine environment is brittle; it will likely fail when faced with the noise and complexity of reality.
 
-This chapter, the capstone of our simulation module, is dedicated to closing that gap. We will achieve this by focusing on two key areas:
-1.  **Environmental Richness:** Replacing simple shapes with complex, realistic 3D models.
-2.  **Sensor Noise Modeling:** Corrupting the perfect data from our simulated sensors to better match their real-world counterparts.
+This chapter, the capstone of our simulation module, is dedicated to closing that gap. We will achieve this by focusing on two key areas :
+1.  **Environmental Richness :** Replacing simple shapes with complex, realistic 3D models.
+2.  **Sensor Noise Modeling :** Corrupting the perfect data from our simulated sensors to better match their real-world counterparts.
 
 By the end, our synchronized twins will not only look and behave correctly, but their perception of the world will be as noisy and challenging as the real thing.
 
 <Mermaid chart={`
 graph TD;
-    A[Ideal Simulation] -- Sim-to-Real Gap --> B[Real World];
-    subgraph Closing the Gap
-        C[Environmental Richness]
-        D[Sensor Noise Modeling]
+    A["Ideal Simulation"] -- Sim-to-Real Gap --> B["Real World"];
+    subgraph "Closing the Gap"
+        C["Environmental Richness"] D["Sensor Noise Modeling"]
     end
     A -- Adding --> C & D;
-    style B fill:#ffcccc
-    style A fill:#ccffcc
+    style B fill :#ffcccc
+    style A fill :#ccffcc
 `} />
 
 
-### Part 1: Building Realistic Indoor Environments
+### Part 1 : Building Realistic Indoor Environments
 
 Our apartment made of simple boxes and cylinders was a great start, but the real world is filled with complex shapes. To create a truly realistic environment, we must use **meshes**. A mesh is a collection of vertices, edges, and faces that define the shape of a 3D object.
 
 #### Asset Sources and Formats
-You don't need to be a 3D artist to create a rich world. There are countless online resources for high-quality, free-to-use 3D models:
+You don't need to be a 3D artist to create a rich world. There are countless online resources for high-quality, free-to-use 3D models :
 *   **Sketchfab**
 *   **BlenderKit**
 *   **Gazebo Fuel** (specifically for simulation assets)
@@ -47,19 +46,18 @@ Common file formats you'll encounter are `.obj`, `.dae` (Collada), `.fbx`, and `
 
 #### Visual vs. Collision Meshes
 A crucial concept is the separation of visual and collision geometry.
-*   **Visual Mesh:** A high-polygon, detailed model used for rendering. It can have millions of vertices to look beautiful.
-*   **Collision Mesh:** A low-polygon, simplified "convex hull" of the object used by the physics engine. Physics calculations are expensive, and using a high-poly mesh for collision detection would bring any simulator to its knees.
+*   **Visual Mesh :** A high-polygon, detailed model used for rendering. It can have millions of vertices to look beautiful.
+*   **Collision Mesh :** A low-polygon, simplified "convex hull" of the object used by the physics engine. Physics calculations are expensive, and using a high-poly mesh for collision detection would bring any simulator to its knees.
 
 <Mermaid chart={`
 graph LR;
-    subgraph 3D Model
-        A[Visual Mesh (High Poly)]
-        B[Collision Mesh (Low Poly)]
+    subgraph "3D Model"
+        A["Visual Mesh (High Poly)"] B["Collision Mesh (Low Poly)"]
     end
-    A -- Rendered by --> C[Graphics Engine];
-    B -- Used by --> D[Physics Engine];
-    style D fill:#lightblue
-    style C fill:#00ff9d
+    A -- Rendered by --> C["Graphics Engine"];
+    B -- Used by --> D["Physics Engine"];
+    style D fill :#lightblue
+    style C fill :#00ff9d
 `} />
 
 #### Implementing Meshes in Gazebo
@@ -68,7 +66,7 @@ In SDF, you replace the `<geometry>` tag's shape (like `<box>`) with a `<mesh>` 
 
 Let's add a couch to our `apartment.sdf` world. Assume we have `couch.dae` (for visual) and `couch_collision.obj` (for collision).
 
-**SDF Snippet:**
+**SDF Snippet :**
 ```xml
 <model name="couch">
   <static>true</static>
@@ -77,21 +75,21 @@ Let's add a couch to our `apartment.sdf` world. Assume we have `couch.dae` (for 
     <visual name="visual">
       <geometry>
         <mesh>
-          <uri>model://my_assets/meshes/couch.dae</uri>
+          <uri>model ://my_assets/meshes/couch.dae</uri>
         </mesh>
       </geometry>
     </visual>
     <collision name="collision">
       <geometry>
         <mesh>
-          <uri>model://my_assets/meshes/couch_collision.obj</uri>
+          <uri>model ://my_assets/meshes/couch_collision.obj</uri>
         </mesh>
       </geometry>
     </collision>
   </link>
 </model>
 ```
-The `model://` URI scheme tells Gazebo to look for the assets in its registered model paths.
+The `model ://` URI scheme tells Gazebo to look for the assets in its registered model paths.
 
 #### Implementing Meshes in Unity
 Unity has a more graphical workflow. You simply drag your mesh file (e.g., an `.fbx`) into the `Assets` folder.
@@ -99,24 +97,24 @@ Unity has a more graphical workflow. You simply drag your mesh file (e.g., an `.
 2.  In the Inspector, Unity automatically adds a `Mesh Renderer` (for visuals).
 3.  Add a `Mesh Collider` component for physics. By default, it will use the visual mesh. To optimize, check the `Convex` box to generate a simplified convex hull, or assign a separate, custom low-poly mesh to the `Mesh` property of the `Mesh Collider`.
 
-### Part 2: The Nature of Sensor Noise
+### Part 2 : The Nature of Sensor Noise
 
 No real-world sensor is perfect. Data is always corrupted by a variety of factors. If we train a perception algorithm on perfect simulation data, it learns to rely on that perfection. The first time it sees a noisy, real-world LiDAR scan, it will fail.
 
-**Common Noise Types:**
-*   **Gaussian Noise:** The most common type, a random value added to measurements, following a bell curve distribution.
-*   **Sensor Bias:** A systematic offset. For example, an IMU that always reports a slight rotation even when stationary.
-*   **Quantization Error:** Caused by converting a continuous analog signal to a discrete digital value.
-*   **Dropouts/Speckle:** Random, incorrect measurements, like a LiDAR beam hitting a reflective surface and returning a garbage value.
+**Common Noise Types :**
+*   **Gaussian Noise :** The most common type, a random value added to measurements, following a bell curve distribution.
+*   **Sensor Bias :** A systematic offset. For example, an IMU that always reports a slight rotation even when stationary.
+*   **Quantization Error :** Caused by converting a continuous analog signal to a discrete digital value.
+*   **Dropouts/Speckle :** Random, incorrect measurements, like a LiDAR beam hitting a reflective surface and returning a garbage value.
 
-### Part 3: Modeling Noise in Gazebo (SDF)
+### Part 3 : Modeling Noise in Gazebo (SDF)
 
 Gazebo's sensor plugins have built-in support for adding noise directly in the SDF file.
 
 #### LiDAR Noise
 We can add a `<noise>` block to our `gpu_lidar` sensor from the previous chapter.
 
-**SDF Snippet:**
+**SDF Snippet :**
 ```xml
 <sensor name="gpu_lidar" type="gpu_lidar">
   <!-- ... other settings ... -->
@@ -134,17 +132,16 @@ We can add a `<noise>` block to our `gpu_lidar` sensor from the previous chapter
 
 <Mermaid chart={`
 graph TD;
-    A[Ideal LiDAR Point] -- Add Gaussian Noise --> B(Noisy LiDAR Point);
-    subgraph Noise Model
-        C[Mean = 0.0]
-        D[StdDev = 0.02]
+    A["Ideal LiDAR Point"] -- Add Gaussian Noise --> B(Noisy LiDAR Point);
+    subgraph "Noise Model"
+        C["Mean = 0.0"] D["StdDev = 0.02"]
     end
 `} />
 
 #### Camera Noise
 The standard camera plugin also supports a noise model.
 
-**SDF Snippet:**
+**SDF Snippet :**
 ```xml
 <sensor name="camera" type="camera">
   <!-- ... other settings ... -->
@@ -161,14 +158,14 @@ The IMU (Inertial Measurement Unit) plugin reads the state of its parent link fr
 *   It calculates **angular velocity** and **linear acceleration**.
 *   It can optionally add simulated sensor drift and noise.
 
-### Part 4: Modeling Noise in Unity (C#)
+### Part 4 : Modeling Noise in Unity (C#)
 
 In Unity, noise is typically added programmatically via C# scripts or through post-processing effects.
 
 #### LiDAR Noise C# Script
 Let's assume you have a script that performs the raycasts for a LiDAR. Instead of publishing the perfect `hit.distance`, you would process it first.
 
-**C# Snippet:**
+**C# Snippet :**
 ```csharp
 // Inside your LiDAR publishing script
 private float AddNoise(float perfectDistance)
@@ -195,18 +192,18 @@ By tweaking these effects, you can create highly realistic camera image corrupti
 
 <Mermaid chart={`
 graph TD
-    A[Raw Rendered Image] --> B{Post-Process Pipeline};
-    B --> C[Add Film Grain];
-    C --> D[Add Chromatic Aberration];
-    D --> E[Add Lens Distortion];
-    E --> F[Final Noisy Image];
-    style F fill:#00ff9d
+    A["Raw Rendered Image"] --> B{Post-Process Pipeline};
+    B --> C["Add Film Grain"];
+    C --> D["Add Chromatic Aberration"];
+    D --> E["Add Lens Distortion"];
+    E --> F["Final Noisy Image"];
+    style F fill :#00ff9d
 `} />
 
 #### IMU Noise C# Script
 Similar to the LiDAR, we would take the "perfect" values from the `Rigidbody` component and add our own noise and drift models.
 
-**C# Snippet:**
+**C# Snippet :**
 ```csharp
 // Inside your IMU Publisher
 private Vector3 currentBias = Vector3.zero;
@@ -231,13 +228,13 @@ void FixedUpdate()
 }
 ```
 
-### Conclusion: Achieving the Synchronized Twin
+### Conclusion : Achieving the Synchronized Twin
 
 We have now come full circle. By creating structurally identical environments with realistic mesh-based assets, we ensure that the robot faces the same physical layout in both Gazebo and Unity. By modeling the imperfections of the real world—sensor noise, bias, and random errors—we create challenging, realistic data streams in both simulators.
 
-Our synchronized twins are now complete:
-*   **The Gazebo Physics Twin:** Used to develop and validate control, locomotion, and manipulation algorithms where physical accuracy is king.
-*   **The Unity Beauty Twin:** Used to develop and validate perception, navigation, and human-interaction algorithms where visual realism is king.
+Our synchronized twins are now complete :
+*   **The Gazebo Physics Twin :** Used to develop and validate control, locomotion, and manipulation algorithms where physical accuracy is king.
+*   **The Unity Beauty Twin :** Used to develop and validate perception, navigation, and human-interaction algorithms where visual realism is king.
 
 An algorithm that can successfully navigate the messy, noisy, and complex world of our synchronized twins has a much higher chance of succeeding when it finally takes its first steps in reality. You have successfully closed a significant portion of the sim-to-real gap.
 

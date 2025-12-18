@@ -1,9 +1,9 @@
 ---
-sidebar_position: 2
+sidebar_position : 2
 ---
 
 # LLM for Command Understanding and Response
-<!-- DIAGRAM: HRI_Workflow -->
+<!-- DIAGRAM : HRI_Workflow -->
 
 Once speech has been converted to text using a Speech-to-Text (STT) model like Whisper, the next step in achieving natural Human-Robot Interaction (HRI) is to interpret these text commands and generate an appropriate response or action. Large Language Models (LLMs) like OpenAI's GPT series are exceptionally good at understanding natural language, extracting intent, and generating coherent text, making them ideal for this role.
 
@@ -31,8 +31,8 @@ from std_msgs.msg import String
 import openai
 import os
 
-class CommandParserNode(Node):
-    def __init__(self):
+class CommandParserNode(Node) :
+    def __init__(self) :
         super().__init__('command_parser_node')
         self.subscription = self.create_subscription(
             String,
@@ -45,42 +45,42 @@ class CommandParserNode(Node):
 
         self.get_logger().info("Command Parser Node initialized. Waiting for commands...")
 
-    def listener_callback(self, msg: String):
+    def listener_callback(self, msg : String) :
         human_command = msg.data
-        self.get_logger().info(f'Received command: "{human_command}"')
+        self.get_logger().info(f'Received command : "{human_command}"')
 
         # Use GPT to understand command and generate response
-        try:
+        try :
             response = self.openai_client.chat.completions.create(
                 model="gpt-3.5-turbo", # Or "gpt-4"
                 messages=[
-                    {"role": "system", "content": "You are a helpful robot assistant. Respond concisely."},
-                    {"role": "user", "content": human_command}
+                    {"role" : "system", "content" : "You are a helpful robot assistant. Respond concisely."},
+                    {"role" : "user", "content" : human_command}
                 ]
             )
             robot_response = response.choices[0].message.content
-            self.get_logger().info(f'GPT responded: "{robot_response}"')
+            self.get_logger().info(f'GPT responded : "{robot_response}"')
 
             # Publish the robot's natural language response
             response_msg = String()
             response_msg.data = robot_response
             self.robot_response_publisher.publish(response_msg)
 
-        except Exception as e:
-            self.get_logger().error(f"Error calling OpenAI GPT API: {e}")
+        except Exception as e :
+            self.get_logger().error(f"Error calling OpenAI GPT API : {e}")
             response_msg = String()
             response_msg.data = "I'm sorry, I could not process that command."
             self.robot_response_publisher.publish(response_msg)
 
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = CommandParserNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
 ```
 
@@ -97,8 +97,8 @@ from std_msgs.msg import String
 # from playsound import playsound # For playing audio - requires platform-specific setup
 # import os
 
-class TextToSpeechNode(Node):
-    def __init__(self):
+class TextToSpeechNode(Node) :
+    def __init__(self) :
         super().__init__('text_to_speech_node')
         self.subscription = self.create_subscription(
             String,
@@ -108,11 +108,11 @@ class TextToSpeechNode(Node):
         self.subscription # prevent unused variable warning
         self.get_logger().info("Text-to-Speech Node initialized. Waiting for robot responses...")
 
-    def listener_callback(self, msg: String):
+    def listener_callback(self, msg : String) :
         robot_text = msg.data
-        self.get_logger().info(f'Received robot response: "{robot_text}"')
+        self.get_logger().info(f'Received robot response : "{robot_text}"')
 
-        try:
+        try :
             # Convert text to speech (conceptual)
             # For a real implementation, you would use a TTS library like gTTS
             # tts = gtts.gTTS(robot_text, lang='en')
@@ -121,17 +121,17 @@ class TextToSpeechNode(Node):
             # playsound(audio_file)
             # os.remove(audio_file) # Clean up audio file
 
-            self.get_logger().info(f'Simulating speech for: "{robot_text}"')
-        except Exception as e:
-            self.get_logger().error(f"Error during text-to-speech conversion: {e}")
+            self.get_logger().info(f'Simulating speech for : "{robot_text}"')
+        except Exception as e :
+            self.get_logger().error(f"Error during text-to-speech conversion : {e}")
 
-def main(args=None):
+def main(args=None) :
     rclpy.init(args=args)
     node = TextToSpeechNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+if __name__ == '__main__' :
     main()
 ```

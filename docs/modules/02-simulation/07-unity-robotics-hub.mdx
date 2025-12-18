@@ -1,42 +1,42 @@
 ---
-title: "07. Unity Robotics Hub & Photorealism"
-sidebar_label: "07. Unity & Photorealism"
+title : "07. Unity Robotics Hub & Photorealism"
+sidebar_label : "07. Unity & Photorealism"
 ---
 
-import { Mermaid } from 'mdx-mermaid';
 
-## Chapter 07: Unity Robotics Hub + Photorealistic Visualization
 
-### Introduction: The Digital Twin's Two Souls
+## Chapter 07 : Unity Robotics Hub + Photorealistic Visualization
+
+### Introduction : The Digital Twin's Two Souls
 
 In our journey so far, we've built a robot's skeleton with URDF and simulated its physical interactions with the world in Gazebo. Gazebo is a champion of physics fidelity, providing a robust environment to test control algorithms and collision dynamics. However, as we venture into the realm of Physical AI and advanced perception, the data from our robot's sensors becomes paramount. What if your robot needs to learn to navigate based on subtle visual cues, reflections, or complex lighting conditions?
 
 This is where Unity enters the stage. Unity, a world-renowned game engine, offers a suite of tools for creating stunning, photorealistic visuals. When paired with the **Unity Robotics Hub**, it becomes a powerful ROS 2-compatible simulator focused on high-fidelity rendering.
 
-**The Great Trade-Off: Gazebo vs. Unity**
+**The Great Trade-Off : Gazebo vs. Unity**
 
-It is critical to understand a core concept: you are trading one form of fidelity for another.
+It is critical to understand a core concept : you are trading one form of fidelity for another.
 
 *   **Gazebo excels at physics simulation.** Its engines are designed for engineering-grade accuracy in dynamics.
 *   **Unity excels at visual simulation.** Its High Definition Render Pipeline (HDRP) is designed for creating cinematic, photorealistic graphics.
 
 <Mermaid chart={`
 graph TD;
-    A[Gazebo] -- Strong --> B[Physics Fidelity];
-    A -- Weak --> C[Visual Fidelity];
+    A[Gazebo] -- Strong --> B["Physics Fidelity"];
+    A -- Weak --> C["Visual Fidelity"];
     D[Unity] -- Strong --> C;
     D -- Weak --> B;
-    style A fill:#lightblue
-    style D fill:#00ff9d
+    style A fill :#lightblue
+    style D fill :#00ff9d
 `} />
 
 The request to make Unity "mirror Gazebo physics exactly" is a common but technically impossible goal. They use different physics engines (e.g., PhysX vs. Bullet) with different solvers and assumptions. **Our goal in this chapter is not to replicate Gazebo's physics, but to create a visually identical world that is functionally equivalent from a ROS 2 perspective, providing photorealistic sensor data that Gazebo cannot.**
 
 ### Setting Up the Unity Environment
 
-1.  **Install Unity Hub:** Download and install the Unity Hub from the official Unity website.
-2.  **Install Unity Editor:** Use the Hub to install a recent version of the Unity Editor with Long-Term Support (LTS). As of writing, **Unity 2022.3.x (LTS)** is a stable choice.
-3.  **Create a New Project:** Create a new project using the **3D (HDRP)** template. This enables the High Definition Render Pipeline, which is essential for photorealism.
+1.  **Install Unity Hub :** Download and install the Unity Hub from the official Unity website.
+2.  **Install Unity Editor :** Use the Hub to install a recent version of the Unity Editor with Long-Term Support (LTS). As of writing, **Unity 2022.3.x (LTS)** is a stable choice.
+3.  **Create a New Project :** Create a new project using the **3D (HDRP)** template. This enables the High Definition Render Pipeline, which is essential for photorealism.
 
 ### The Unity Robotics Hub
 
@@ -45,37 +45,37 @@ The Robotics Hub is a set of open-source packages that connect Unity with ROS. W
 1.  Open your Unity project.
 2.  Go to `Window > Package Manager`.
 3.  Click the `+` icon and select `Add package from git URL...`.
-4.  Enter `https://github.com/Unity-Technologies/Unity-Robotics-Hub.git` and click `Add`.
+4.  Enter `https ://github.com/Unity-Technologies/Unity-Robotics-Hub.git` and click `Add`.
 
 This will install the necessary packages, including the crucial ROS-TCP-Connector.
 
-### ROS-TCP-Connector: The Bridge Architecture
+### ROS-TCP-Connector : The Bridge Architecture
 
 Unlike Gazebo's direct plugin system, Unity communicates with ROS over a TCP/IP bridge.
 
-*   **ROS-TCP-Endpoint (ROS side):** A ROS 2 node you run on your machine that acts as a server. It receives TCP connections from Unity and translates messages to and from the ROS 2 network (DDS).
-*   **ROSConnection (Unity side):** A C# component in your Unity scene that connects to the ROS-TCP-Endpoint server. It manages the serialization and deserialization of messages.
+*   **ROS-TCP-Endpoint (ROS side) :** A ROS 2 node you run on your machine that acts as a server. It receives TCP connections from Unity and translates messages to and from the ROS 2 network (DDS).
+*   **ROSConnection (Unity side) :** A C# component in your Unity scene that connects to the ROS-TCP-Endpoint server. It manages the serialization and deserialization of messages.
 
 <Mermaid chart={`
 sequenceDiagram
     participant Unity as Unity Scene (Client)
     participant ROS as ROS-TCP-Endpoint (Server)
     participant ROS2 as ROS 2 Network (DDS)
-    Unity->>ROS: Establish TCP Connection
-    ROS-->>Unity: Connection Confirmed
-    Unity->>ROS: Publish /cmd_vel (Serialized C#)
-    ROS->>ROS2: Publish /cmd_vel (ROS 2 Message)
-    ROS2->>ROS: Publish /imu (ROS 2 Message)
-    ROS-->>Unity: Send /imu (Serialized C#)
+    Unity->>ROS : Establish TCP Connection
+    ROS-->>Unity : Connection Confirmed
+    Unity->>ROS : Publish /cmd_vel (Serialized C#)
+    ROS->>ROS2 : Publish /cmd_vel (ROS 2 Message)
+    ROS2->>ROS : Publish /imu (ROS 2 Message)
+    ROS-->>Unity : Send /imu (Serialized C#)
 `} />
 
-### Recreating the Apartment: A Visual Twin
+### Recreating the Apartment : A Visual Twin
 
 We will now build the same apartment from the Gazebo chapter, but this time focusing on aesthetics.
 
-1.  **ProBuilder:** Use the `ProBuilder` package (`Window > Package Manager`) to easily create the floor and walls. This tool allows for intuitive "probuidling" of meshes directly in the scene.
-2.  **HDRP Materials:** Create new materials (`Assets > Create > Material`). In the Inspector, select the `HDRP` shader. You can use textures (e.g., from an asset store or a site like `ambientCG.com`) for wood floors and concrete walls to achieve realism.
-3.  **Lighting:**
+1.  **ProBuilder :** Use the `ProBuilder` package (`Window > Package Manager`) to easily create the floor and walls. This tool allows for intuitive "probuidling" of meshes directly in the scene.
+2.  **HDRP Materials :** Create new materials (`Assets > Create > Material`). In the Inspector, select the `HDRP` shader. You can use textures (e.g., from an asset store or a site like `ambientCG.com`) for wood floors and concrete walls to achieve realism.
+3.  **Lighting :**
     *   Delete the default directional light.
     *   Add an **HDRI Sky** (`Volume > Sky and Fog Volume`) to create realistic ambient lighting from an environment map.
     *   Add **Area Lights** to simulate indoor light fixtures. Tweak their intensity, color temperature, and range to create a "human-beautiful" scene.
@@ -86,18 +86,18 @@ Unity's Robotics Hub includes a URDF Importer.
 
 1.  Go to `Robotics > URDF Importer`.
 2.  Select your `h1.urdf.xacro` file. The importer will convert it into a Unity prefab.
-3.  **Articulation Bodies:** The importer automatically configures the robot's joints using **ArticulationBody** components. These are Unity's specialized physics components for robotic arms and kinematic chains. You can inspect each joint's limits and drive parameters in the Inspector.
+3.  **Articulation Bodies :** The importer automatically configures the robot's joints using **ArticulationBody** components. These are Unity's specialized physics components for robotic arms and kinematic chains. You can inspect each joint's limits and drive parameters in the Inspector.
 
 <Mermaid chart={`
 graph TD
-    A[URDF File] --> B(URDF Importer);
-    B --> C[Unity Prefab];
+    A["URDF File"] --> B(URDF Importer);
+    B --> C["Unity Prefab"];
     C --> D{Links as GameObjects};
     C --> E{Joints as ArticulationBody Components};
-    style C fill:#00ff9d
+    style C fill :#00ff9d
 `} />
 
-### ROS 2 Integration: Mirroring Gazebo's Topics
+### ROS 2 Integration : Mirroring Gazebo's Topics
 
 Our goal is to have this Unity simulation publish the exact same topics as our Gazebo simulation. This is done by adding C# script components to the GameObjects in our scene.
 
@@ -108,7 +108,7 @@ The Robotics Hub provides a `ROSConnection` prefab. Drag it into your scene. In 
 
 Create a C# script named `ImuPublisher.cs` and attach it to the `head` link of your imported robot.
 
-**`ImuPublisher.cs`:**
+**`ImuPublisher.cs` :**
 ```csharp
 using UnityEngine;
 using Unity.Robotics.ROSTCPConnector;
@@ -154,7 +154,7 @@ This script gets a reference to the ROS connection, registers a publisher, and t
 
 Create a script `ArticulationController.cs` to subscribe to joint commands.
 
-**`ArticulationController.cs`:**
+**`ArticulationController.cs` :**
 ```csharp
 using UnityEngine;
 using Unity.Robotics.ROSTCPConnector;
@@ -181,12 +181,12 @@ public class ArticulationController : MonoBehaviour
 
 ### Running the Full Simulation
 
-1.  **On the ROS 2 machine:**
+1.  **On the ROS 2 machine :**
     *   Clone the `ros-tcp-endpoint` repository from Unity's GitHub.
     *   Build the package with `colcon build`.
-    *   Launch the endpoint: `ros2 launch ros_tcp_endpoint endpoint.launch.py`
+    *   Launch the endpoint : `ros2 launch ros_tcp_endpoint endpoint.launch.py`
 
-2.  **In the Unity Editor:**
+2.  **In the Unity Editor :**
     *   Ensure your `ROSConnection` prefab is configured with the correct IP address.
     *   Press the "Play" button.
 
@@ -194,12 +194,12 @@ The Unity Editor will connect to the ROS endpoint. The publishers in your scene 
 
 <Mermaid chart={`
 graph TD;
-    subgraph Unity Machine
-        A[Unity Editor in Play Mode] -- TCP --> B(IP:Port);
+    subgraph "Unity Machine"
+        A["Unity Editor in Play Mode"] -- TCP --> B(IP :Port);
     end
-    subgraph ROS 2 Machine
-        C[ros_tcp_endpoint Node] -- Listens on --> B;
-        C -- DDS --> D[rest of ROS 2 network];
+    subgraph "ROS 2 Machine"
+        C["ros_tcp_endpoint Node"] -- Listens on --> B;
+        C -- DDS --> D["rest of ROS 2 network"];
     end
 `} />
 
